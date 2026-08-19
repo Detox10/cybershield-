@@ -192,7 +192,7 @@ export const BackendConfigFlow: React.FC = () => {
                 </div>
               )}
               <p className="text-[10px]" style={{ color: 'var(--cs-text-muted)' }}>
-                Leave blank to automatically use CyberShield's built-in offline threat signature hash database.
+                Leave blank to automatically use CyberShield&apos;s built-in offline threat signature hash database.
               </p>
             </div>
           </div>

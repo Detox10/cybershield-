@@ -173,7 +173,7 @@ export const DashboardFlow: React.FC<DashboardFlowProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-extrabold uppercase font-mono tracking-wider text-slate-400 dark:text-slate-500">
-                TODAY'S CORE INSIGHT
+                TODAY&apos;S CORE INSIGHT
               </span>
               <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
               <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">

@@ -245,7 +245,7 @@ export default function SpotlightSearch({
               {filteredItems.length === 0 ? (
                 <div className="py-12 text-center text-slate-400 dark:text-slate-500 space-y-1">
                   <p className="text-sm font-medium">No matching commands or resources found.</p>
-                  <p className="text-xs text-slate-400">Try searching "scan", "threat", "memory", or "assistant"</p>
+                  <p className="text-xs text-slate-400">Try searching &quot;scan&quot;, &quot;threat&quot;, &quot;memory&quot;, or &quot;assistant&quot;</p>
                 </div>
               ) : (
                 filteredItems.map((item) => {
