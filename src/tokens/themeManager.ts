@@ -16,8 +16,8 @@ export interface ThemeConfig {
 }
 
 export const DEFAULT_THEME: ThemeConfig = {
-  mode: "light",
-  accent: "crimson",
+  mode: "dark",
+  accent: "amber",
   gradient: "cyber-aurora",
 };
 
