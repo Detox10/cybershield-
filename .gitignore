@@ -1,5 +1,6 @@
 # dependencies
 /node_modules
+agent/node_modules
 /.pnp
 .pnp.js
 .yarn/install-state.gz
@@ -33,3 +34,7 @@ next-env.d.ts
 
 # compiled agents
 *.exe
+
+# database files
+*.db
+cybershield_data.json
