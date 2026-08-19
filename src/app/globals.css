@@ -1,0 +1,405 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@import "../styles/design-tokens.css";
+@import "../styles/nothing-motion.css";
+
+:root {
+  --background: #FAFBFC;
+  --foreground: #0F172A;
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(226, 232, 240, 0.85);
+  --card-border: rgba(226, 232, 240, 0.9);
+  --shadow-layer-1: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-layer-2: 0 4px 14px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.02);
+  --shadow-layer-3: 0 10px 25px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+  --shadow-layer-4: 0 20px 35px -5px rgba(0, 0, 0, 0.10), 0 8px 10px -4px rgba(0, 0, 0, 0.03);
+  --glow-light: rgba(255, 122, 0, 0.18);
+  --cs-accent: #FF7A00;
+  --cs-accent-glow: rgba(255, 122, 0, 0.35);
+  --cs-accent-bg: rgba(255, 122, 0, 0.12);
+  --cs-gradient: linear-gradient(135deg, #FF7A00 0%, #06B6D4 50%, #8B5CF6 100%);
+  --cs-bg-base: #FAFBFC;
+  --cs-bg-card: #FFFFFF;
+  --cs-bg-surface: #F1F5F9;
+  --cs-bg-input: #FFFFFF;
+  --cs-text-primary: #0F172A;
+  --cs-text-secondary: #475569;
+  --cs-text-muted: #94A3B8;
+  --cs-border: #E2E8F0;
+  --cs-border-strong: #CBD5E1;
+}
+
+.light {
+  --background: #F8FAFC;
+  --foreground: #0F172A;
+  --glass-bg: rgba(255, 255, 255, 0.92);
+  --glass-border: rgba(226, 232, 240, 0.9);
+  --card-border: rgba(203, 213, 225, 0.8);
+  --shadow-layer-1: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-layer-2: 0 4px 14px rgba(0, 0, 0, 0.06);
+  --shadow-layer-3: 0 10px 25px -3px rgba(0, 0, 0, 0.08);
+  --shadow-layer-4: 0 20px 35px -5px rgba(0, 0, 0, 0.12);
+  --cs-bg-base: #F8FAFC;
+  --cs-bg-card: #FFFFFF;
+  --cs-bg-surface: #F1F5F9;
+  --cs-bg-input: #FFFFFF;
+  --cs-text-primary: #0F172A;
+  --cs-text-secondary: #475569;
+  --cs-text-muted: #94A3B8;
+  --cs-border: #E2E8F0;
+  --cs-border-strong: #CBD5E1;
+}
+
+/* =====================================================
+   LIGHT THEME — Global Hardcoded Color Overrides
+   Corrects components that still use hardcoded Tailwind
+   dark-mode colors (text-white, text-slate-*, bg-[#...])
+   ===================================================== */
+
+/* text-white → primary text in light mode */
+.light .text-white {
+  color: #0F172A !important;
+}
+
+/* text-slate-50/100/200/300 → near-black in light mode */
+.light .text-slate-50,
+.light .text-slate-100,
+.light .text-slate-200,
+.light .text-slate-300 {
+  color: #1E293B !important;
+}
+
+/* text-slate-400/500 → medium gray in light mode */
+.light .text-slate-400,
+.light .text-slate-500 {
+  color: #64748B !important;
+}
+
+/* text-slate-600/700/800/900 → already dark, keep */
+
+/* Sidebar & panel dark backgrounds → light equivalents */
+.light [class*="bg-\[#1C2028\]"],
+.light [class*="bg-\[#12151D\]"],
+.light [class*="bg-\[#202532\]"],
+.light [class*="bg-\[#202534\]"],
+.light [class*="bg-\[#0B0C10\]"],
+.light [class*="bg-\[#121418\]"],
+.light [class*="bg-\[#111317\]"],
+.light [class*="bg-\[#0E1014\]"],
+.light [class*="bg-\[#141821\]"],
+.light [class*="bg-\[#1E232E\]"],
+.light [class*="bg-\[#222736\]"],
+.light [class*="bg-\[#0E1015\]"],
+.light [class*="bg-\[#080A0F\]"],
+.light [class*="bg-\[#0C0F16\]"],
+.light [class*="bg-\[#111622\]"] {
+  background-color: #E2E8F0 !important;
+}
+
+/* Elevated nested panels */
+.light [class*="bg-\[#0C0E12\]"],
+.light [class*="bg-\[#151820\]"],
+.light [class*="bg-\[#161921\]"],
+.light [class*="bg-\[#161922\]"],
+.light [class*="bg-\[#1A1D25\]"],
+.light [class*="bg-\[#13161E\]"],
+.light [class*="bg-\[#14161E\]"],
+.light [class*="bg-\[#0F1218\]"] {
+  background-color: #F8FAFC !important;
+}
+
+/* Chart bars */
+.light [class*="bg-\[#181B22\]"] {
+  background-color: #CBD5E1 !important;
+}
+.light [class*="bg-\[#282E3C\]"] {
+  background-color: #94A3B8 !important;
+}
+
+/* Top most interactive elements */
+.light [class*="bg-\[#1C202C\]"] {
+  background-color: #FFFFFF !important;
+}
+
+/* Generic border-white/* → light-mode border */
+.light [class*="border-white/"] {
+  border-color: rgba(15,23,42,0.12) !important;
+}
+
+/* hover:bg-white/ micro surfaces */
+.light [class*="hover:bg-white/"] {
+  --tw-bg-opacity: 1;
+}
+.light *:hover[class*="hover:bg-white/"] {
+  background-color: rgba(15,23,42,0.05) !important;
+}
+
+/* Fix opacity-modified dark backgrounds (e.g. bg-[#121418]/90) */
+.light [class*="bg-\[#121418\]/"],
+.light [class*="bg-\[#0B0C10\]/"],
+.light [class*="bg-\[#111317\]/"] {
+  background-color: rgba(226, 232, 240, 0.85) !important;
+}
+
+.light [class*="bg-\[#151820\]/"],
+.light [class*="bg-\[#161921\]/"],
+.light [class*="bg-\[#161922\]/"],
+.light [class*="bg-\[#1C2028\]/"],
+.light [class*="bg-\[#0F1218\]/"] {
+  background-color: rgba(248, 250, 252, 0.95) !important;
+}
+
+/* Fix SVG hardcoded dark theme colors for graphs */
+.light svg line[stroke="rgba(255,255,255,0.06)"] {
+  stroke: rgba(15,23,42,0.12) !important;
+}
+.light svg line[stroke="rgba(255,255,255,0.3)"] {
+  stroke: rgba(15,23,42,0.4) !important;
+}
+.light svg circle[fill="#111317"] {
+  fill: #FFFFFF !important;
+}
+
+.dark {
+  --background: #0B0C10;
+  --foreground: #F1F5F9;
+  --glass-bg: rgba(20, 24, 33, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.10);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --shadow-layer-1: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-layer-2: 0 4px 14px rgba(0, 0, 0, 0.35);
+  --shadow-layer-3: 0 10px 25px -3px rgba(0, 0, 0, 0.45);
+  --shadow-layer-4: 0 20px 35px -5px rgba(0, 0, 0, 0.55);
+  --glow-light: rgba(255, 122, 0, 0.25);
+  --cs-bg-base: #0B0C10;
+  --cs-bg-card: #141821;
+  --cs-bg-surface: #1E232E;
+  --cs-bg-input: #141821;
+  --cs-text-primary: #F1F5F9;
+  --cs-text-secondary: #94A3B8;
+  --cs-text-muted: #64748B;
+  --cs-border: #2D3748;
+  --cs-border-strong: #475569;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ethereal Animated Top Edge Gradient Glow */
+@keyframes auroraGlowFlow {
+  0% {
+    background-position: 0% 50%;
+    opacity: 0.7;
+  }
+  50% {
+    background-position: 100% 50%;
+    opacity: 1;
+  }
+  100% {
+    background-position: 0% 50%;
+    opacity: 0.7;
+  }
+}
+
+/* Tab Glowing Gradient Light */
+@keyframes tabGlowPulse {
+  0%, 100% {
+    box-shadow: 0 0 14px rgba(56, 189, 248, 0.2), inset 0 0 8px rgba(56, 189, 248, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 22px rgba(56, 189, 248, 0.38), inset 0 0 12px rgba(45, 212, 191, 0.2);
+  }
+}
+
+.tab-active-glow {
+  position: relative;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08), 0 0 15px rgba(56, 189, 248, 0.18);
+}
+
+.tab-active-glow::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.4), rgba(45, 212, 191, 0.2), rgba(167, 139, 250, 0.3));
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.85;
+}
+
+.dark .tab-active-glow::after {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.6), rgba(45, 212, 191, 0.3), rgba(167, 139, 250, 0.5));
+}
+
+/* Layer 1: Premium Glassmorphic Surfaces with Thin Animated Light Gradient */
+.glass-card {
+  background-color: var(--glass-bg);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-layer-2), inset 1px 1px 0 rgba(255, 255, 255, 0.35);
+  position: relative;
+  transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 200ms cubic-bezier(0.16, 1, 0.3, 1), border-color 200ms ease;
+}
+
+.glass-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1.5px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(56, 189, 248, 0.4) 20%,
+    rgba(45, 212, 191, 0.55) 50%,
+    rgba(167, 139, 250, 0.4) 80%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
+  pointer-events: none;
+  animation: auroraGlowFlow 8s infinite ease-in-out;
+}
+
+.dark .glass-card {
+  box-shadow: var(--shadow-layer-2), inset 1px 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.dark .glass-card::before {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(56, 189, 248, 0.3) 20%,
+    rgba(45, 212, 191, 0.45) 50%,
+    rgba(167, 139, 250, 0.3) 80%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+}
+
+/* Ambient Top Light Diffusion */
+.top-ambient-glow {
+  position: relative;
+}
+.top-ambient-glow::after {
+  content: "";
+  position: absolute;
+  top: -12px;
+  left: 15%;
+  right: 15%;
+  height: 24px;
+  background: radial-gradient(ellipse at center, rgba(56, 189, 248, 0.25), transparent 70%);
+  filter: blur(12px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Elevation Depth Levels */
+.elevation-1 {
+  box-shadow: var(--shadow-layer-1);
+}
+
+.elevation-2 {
+  box-shadow: var(--shadow-layer-2);
+}
+
+.elevation-3 {
+  box-shadow: var(--shadow-layer-3);
+}
+
+.elevation-4 {
+  box-shadow: var(--shadow-layer-4);
+}
+
+/* Hover Elevation Micro-Interaction */
+.hover-elevate {
+  transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 200ms cubic-bezier(0.16, 1, 0.3, 1), border-color 200ms ease;
+}
+
+.hover-elevate:hover {
+  transform: translateY(-2.5px);
+  box-shadow: var(--shadow-layer-3);
+}
+
+/* Button Press & Micro-Interactions */
+.btn-interactive {
+  transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 150ms cubic-bezier(0.4, 0, 0.2, 1), background-color 150ms ease;
+}
+
+.btn-interactive:hover {
+  transform: translateY(-1.5px);
+  box-shadow: var(--shadow-layer-2);
+}
+
+.btn-interactive:active {
+  transform: scale(0.98) translateY(0);
+}
+
+/* Shimmer Skeleton Animation */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s infinite linear;
+}
+
+.dark .animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s infinite linear;
+}
+
+/* Custom Refined Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.25);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.45);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

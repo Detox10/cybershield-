@@ -1,0 +1,98 @@
+/**
+ * CyberShield Unified Design System CSS Custom Properties
+ * Light-theme primary default with full dark-theme toggle support.
+ */
+
+:root {
+  /* Canvas & Surfaces (Light Theme Primary) */
+  --cs-bg-canvas: #F8FAFC;
+  --cs-bg-surface: #FFFFFF;
+  --cs-bg-subtle: #F1F5F9;
+  --cs-bg-muted: #E2E8F0;
+  
+  /* Borders */
+  --cs-border: #E2E8F0;
+  --cs-border-hover: #CBD5E1;
+  --cs-border-focus: #0284C7;
+  
+  /* Typography */
+  --cs-text-primary: #0F172A;
+  --cs-text-secondary: #475569;
+  --cs-text-muted: #94A3B8;
+  --cs-text-inverse: #FFFFFF;
+
+  /* Brand Accents */
+  --cs-primary: #0284C7;
+  --cs-primary-hover: #0369A1;
+  --cs-primary-subtle: #F0F9FF;
+  --cs-primary-border: #BAE6FD;
+
+  /* Status Colors */
+  --cs-success: #059669;
+  --cs-success-bg: #ECFDF5;
+  --cs-success-border: #A7F3D0;
+
+  --cs-warning: #D97706;
+  --cs-warning-bg: #FFFBEB;
+  --cs-warning-border: #FDE68A;
+
+  --cs-critical: #DC2626;
+  --cs-critical-bg: #FEF2F2;
+  --cs-critical-border: #FECACA;
+
+  --cs-info: #0284C7;
+  --cs-info-bg: #F0F9FF;
+  --cs-info-border: #BAE6FD;
+
+  /* Shadows */
+  --cs-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --cs-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --cs-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+}
+
+.dark {
+  /* Canvas & Surfaces (Dark Theme) */
+  --cs-bg-canvas: #070B14;
+  --cs-bg-surface: #0E1526;
+  --cs-bg-subtle: #162035;
+  --cs-bg-muted: #1E2C48;
+  
+  /* Borders */
+  --cs-border: rgba(255, 255, 255, 0.08);
+  --cs-border-hover: rgba(255, 255, 255, 0.16);
+  --cs-border-focus: #38BDF8;
+  
+  /* Typography */
+  --cs-text-primary: #F8FAFC;
+  --cs-text-secondary: #94A3B8;
+  --cs-text-muted: #64748B;
+  --cs-text-inverse: #0F172A;
+
+  /* Brand Accents */
+  --cs-primary: #38BDF8;
+  --cs-primary-hover: #7DD3FC;
+  --cs-primary-subtle: rgba(56, 189, 248, 0.12);
+  --cs-primary-border: rgba(56, 189, 248, 0.25);
+
+  /* Status Colors */
+  --cs-success: #10B981;
+  --cs-success-bg: rgba(16, 185, 129, 0.12);
+  --cs-success-border: rgba(16, 185, 129, 0.25);
+
+  --cs-warning: #F59E0B;
+  --cs-warning-bg: rgba(245, 158, 11, 0.12);
+  --cs-warning-border: rgba(245, 158, 11, 0.25);
+
+  --cs-critical: #EF4444;
+  --cs-critical-bg: rgba(239, 68, 68, 0.12);
+  --cs-critical-border: rgba(239, 68, 68, 0.25);
+
+  --cs-info: #38BDF8;
+  --cs-info-bg: rgba(56, 189, 248, 0.12);
+  --cs-info-border: rgba(56, 189, 248, 0.25);
+
+  /* Shadows */
+  --cs-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+  --cs-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.6), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
+  --cs-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.7), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
+}

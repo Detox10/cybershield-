@@ -1,0 +1,270 @@
+{
+  "scans": [
+    {
+      "id": "scan-1786961566430",
+      "name": "command-center.css",
+      "size": "7.9 KB",
+      "type": "text/css",
+      "sha256": "5901a45e57a6fd91ee504237430fd01aab03e2a7b8d5387997c2ed6e33d185a0",
+      "entropy": 5.079,
+      "isMalicious": false,
+      "severity": "CLEAN",
+      "positives": 0,
+      "totalEngines": 72,
+      "verdict": "command-center.css",
+      "familyName": "Verified.Clean.Artifact",
+      "mitreTtp": "None (Nominal Clean Binary)",
+      "timestamp": "17/8/2026, 3:42:46 pm",
+      "quarantined": false,
+      "engineResults": {
+        "Local Entropy Heuristics": "Clean"
+      }
+    },
+    {
+      "id": "scan-1786718769090",
+      "name": "CyberShield_SIH2025.pptx",
+      "size": "259.3 KB",
+      "type": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "sha256": "ef076f588cefc0fe5378dba6d9c75403df2a7b8fd93751471666cca3d33d92f1",
+      "entropy": 7.983,
+      "isMalicious": true,
+      "severity": "HIGH",
+      "positives": 0,
+      "totalEngines": 72,
+      "verdict": "CyberShield_SIH2025.pptx",
+      "familyName": "Heuristic.HighEntropy.PackedPayload",
+      "mitreTtp": "T1027 (Obfuscated / Packed Files)",
+      "timestamp": "14/8/2026, 8:16:09 pm",
+      "quarantined": true,
+      "engineResults": {
+        "Local Entropy Heuristics": "Suspicious High Entropy"
+      }
+    },
+    {
+      "id": "scan-1786620812689",
+      "name": "hackathon-rules.pdf",
+      "size": "1.49 MB",
+      "type": "application/pdf",
+      "sha256": "a1a15cec3095aefcf6fc8fdc5bcdaf8ae617ea7fb00a0c08127c65029229603a",
+      "entropy": 7.794,
+      "isMalicious": true,
+      "severity": "HIGH",
+      "positives": 0,
+      "totalEngines": 72,
+      "verdict": "hackathon-rules.pdf",
+      "familyName": "Heuristic.HighEntropy.PackedPayload",
+      "mitreTtp": "T1027 (Obfuscated / Packed Files)",
+      "timestamp": "13/8/2026, 5:03:32 pm",
+      "quarantined": true,
+      "engineResults": {
+        "Local Entropy Heuristics": "Suspicious High Entropy"
+      }
+    },
+    {
+      "id": "scan-1786607379398",
+      "name": "cybershield_audit_logs_1786598629732.csv",
+      "size": "633 B",
+      "type": "text/csv",
+      "sha256": "be7396a2ece639b19bb25ed7f2fa4e0eb59aec038e8df80da73059498639986e",
+      "entropy": 5.48,
+      "isMalicious": false,
+      "severity": "CLEAN",
+      "positives": 0,
+      "totalEngines": 72,
+      "verdict": "cybershield_audit_logs_1786598629732.csv",
+      "familyName": "Verified.Clean.Artifact",
+      "mitreTtp": "None (Nominal Clean Binary)",
+      "timestamp": "13/8/2026, 1:19:39 pm",
+      "quarantined": false,
+      "engineResults": {
+        "Local Entropy Heuristics": "Clean"
+      }
+    }
+  ],
+  "reports": [],
+  "users": [],
+  "timeline": [
+    {
+      "id": "evt-rw-5525",
+      "time": "10:03 am",
+      "title": "Ransomware Pre-cursor Blocked",
+      "description": "Lateral movement via SMB blocked.",
+      "type": "warning"
+    },
+    {
+      "id": "evt-rw-544",
+      "time": "09:58 am",
+      "title": "Ransomware Pre-cursor Blocked",
+      "description": "Lateral movement via SMB blocked.",
+      "type": "warning"
+    },
+    {
+      "id": "evt-zd-3720",
+      "time": "09:58 am",
+      "title": "Zero-Day Exploit Attempt",
+      "description": "Unknown memory corruption payload intercepted.",
+      "type": "critical"
+    },
+    {
+      "id": "evt-ddos-1632",
+      "time": "09:58 am",
+      "title": "Volumetric DDoS Detected",
+      "description": "Massive SYN flood mitigated by edge firewalls.",
+      "type": "critical"
+    },
+    {
+      "id": "evt-ddos-4510",
+      "time": "08:41 am",
+      "title": "Volumetric DDoS Detected",
+      "description": "Massive SYN flood mitigated by edge firewalls.",
+      "type": "critical"
+    },
+    {
+      "id": "evt-rw-2566",
+      "time": "08:41 am",
+      "title": "Ransomware Pre-cursor Blocked",
+      "description": "Lateral movement via SMB blocked.",
+      "type": "warning"
+    },
+    {
+      "id": "evt-rw-7928",
+      "time": "08:41 am",
+      "title": "Ransomware Pre-cursor Blocked",
+      "description": "Lateral movement via SMB blocked.",
+      "type": "warning"
+    },
+    {
+      "id": "evt-ddos-2015",
+      "time": "08:41 am",
+      "title": "Volumetric DDoS Detected",
+      "description": "Massive SYN flood mitigated by edge firewalls.",
+      "type": "critical"
+    },
+    {
+      "id": "evt-zd-4017",
+      "time": "08:41 am",
+      "title": "Zero-Day Exploit Attempt",
+      "description": "Unknown memory corruption payload intercepted.",
+      "type": "critical"
+    },
+    {
+      "id": "evt-zd-4135",
+      "time": "08:40 am",
+      "title": "Zero-Day Exploit Attempt",
+      "description": "Unknown memory corruption payload intercepted.",
+      "type": "critical"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "inc-rw-5525",
+      "threatName": "Ransomware Lateral Scan",
+      "cveTtp": "T1021.002 (SMB/Windows Admin Shares)",
+      "targetHost": "workstation-hr-02",
+      "vector": "Network Segregation",
+      "severity": "HIGH",
+      "timestamp": "Just now",
+      "status": "BLOCKED",
+      "aiSummary": "Multiple unauthorized SMB login attempts detected from compromised host."
+    },
+    {
+      "id": "inc-rw-544",
+      "threatName": "Ransomware Lateral Scan",
+      "cveTtp": "T1021.002 (SMB/Windows Admin Shares)",
+      "targetHost": "workstation-hr-02",
+      "vector": "Network Segregation",
+      "severity": "HIGH",
+      "timestamp": "Just now",
+      "status": "BLOCKED",
+      "aiSummary": "Multiple unauthorized SMB login attempts detected from compromised host."
+    },
+    {
+      "id": "inc-zd-3720",
+      "threatName": "Unknown Memory Corruption",
+      "cveTtp": "Zero-Day (Heuristic)",
+      "targetHost": "srv-auth-prod-02",
+      "vector": "Heuristic Monitor",
+      "severity": "CRITICAL",
+      "timestamp": "Just now",
+      "status": "QUARANTINED",
+      "aiSummary": "Sensor detected unusual pointer dereference; process terminated instantly."
+    },
+    {
+      "id": "inc-ddos-1632",
+      "threatName": "Distributed SYN Flood",
+      "cveTtp": "T1498 (Network Denial of Service)",
+      "targetHost": "api-gateway-edge",
+      "vector": "Edge WAF",
+      "severity": "CRITICAL",
+      "timestamp": "Just now",
+      "status": "BLOCKED",
+      "aiSummary": "Autonomous traffic shaping applied to absorb 500Gbps SYN flood."
+    },
+    {
+      "id": "inc-ddos-4510",
+      "threatName": "Distributed SYN Flood",
+      "cveTtp": "T1498 (Network Denial of Service)",
+      "targetHost": "api-gateway-edge",
+      "vector": "Edge WAF",
+      "severity": "CRITICAL",
+      "timestamp": "Just now",
+      "status": "BLOCKED",
+      "aiSummary": "Autonomous traffic shaping applied to absorb 500Gbps SYN flood."
+    },
+    {
+      "id": "inc-rw-2566",
+      "threatName": "Ransomware Lateral Scan",
+      "cveTtp": "T1021.002 (SMB/Windows Admin Shares)",
+      "targetHost": "workstation-hr-02",
+      "vector": "Network Segregation",
+      "severity": "HIGH",
+      "timestamp": "Just now",
+      "status": "BLOCKED",
+      "aiSummary": "Multiple unauthorized SMB login attempts detected from compromised host."
+    },
+    {
+      "id": "inc-rw-7928",
+      "threatName": "Ransomware Lateral Scan",
+      "cveTtp": "T1021.002 (SMB/Windows Admin Shares)",
+      "targetHost": "workstation-hr-02",
+      "vector": "Network Segregation",
+      "severity": "HIGH",
+      "timestamp": "Just now",
+      "status": "BLOCKED",
+      "aiSummary": "Multiple unauthorized SMB login attempts detected from compromised host."
+    },
+    {
+      "id": "inc-ddos-2015",
+      "threatName": "Distributed SYN Flood",
+      "cveTtp": "T1498 (Network Denial of Service)",
+      "targetHost": "api-gateway-edge",
+      "vector": "Edge WAF",
+      "severity": "CRITICAL",
+      "timestamp": "Just now",
+      "status": "BLOCKED",
+      "aiSummary": "Autonomous traffic shaping applied to absorb 500Gbps SYN flood."
+    },
+    {
+      "id": "inc-zd-4017",
+      "threatName": "Unknown Memory Corruption",
+      "cveTtp": "Zero-Day (Heuristic)",
+      "targetHost": "srv-auth-prod-02",
+      "vector": "Heuristic Monitor",
+      "severity": "CRITICAL",
+      "timestamp": "Just now",
+      "status": "QUARANTINED",
+      "aiSummary": "Sensor detected unusual pointer dereference; process terminated instantly."
+    },
+    {
+      "id": "inc-zd-4135",
+      "threatName": "Unknown Memory Corruption",
+      "cveTtp": "Zero-Day (Heuristic)",
+      "targetHost": "srv-auth-prod-02",
+      "vector": "Heuristic Monitor",
+      "severity": "CRITICAL",
+      "timestamp": "Just now",
+      "status": "QUARANTINED",
+      "aiSummary": "Sensor detected unusual pointer dereference; process terminated instantly."
+    }
+  ]
+}

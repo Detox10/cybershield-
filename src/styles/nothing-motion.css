@@ -1,0 +1,125 @@
+/* CyberShield Nothing OS-Inspired Motion System */
+:root {
+  --curve-primary: cubic-bezier(0.65, 0, 0.35, 1);
+  --curve-snap: cubic-bezier(0.2, 0, 0, 1);
+  
+  --dur-micro: 120ms;
+  --dur-standard: 240ms;
+  --dur-deliberate: 400ms;
+  --dur-breathing: 4000ms;
+  --dur-scan-breathing: 2000ms;
+}
+
+/* Mechanical Button Press - Hard 1px inset with instant snap */
+.btn-mechanical {
+  transition: transform var(--dur-micro) var(--curve-snap),
+              background-color var(--dur-micro) var(--curve-snap),
+              border-color var(--dur-micro) var(--curve-snap);
+}
+
+.btn-mechanical:active {
+  transform: translateY(1px) scale(0.985);
+}
+
+/* Mechanical Card Contact - Flat at rest, subtle 98% scale recession on active */
+.card-mechanical {
+  transition: transform var(--dur-micro) var(--curve-snap),
+              border-color var(--dur-standard) var(--curve-primary);
+}
+
+.card-mechanical:active {
+  transform: scale(0.988);
+}
+
+/* Dot Grid Background Texture (Nothing OS signature matrix) */
+.dot-grid-bg {
+  background-image: radial-gradient(rgba(148, 163, 184, 0.35) 1.5px, transparent 1.5px);
+  background-size: 8px 8px;
+}
+
+.dark .dot-grid-bg {
+  background-image: radial-gradient(rgba(100, 116, 139, 0.3) 1.5px, transparent 1.5px);
+  background-size: 8px 8px;
+}
+
+/* Dot Grid Active Scan Sweep */
+@keyframes dotScanSweep {
+  0% {
+    mask-position: -100% 0;
+    -webkit-mask-position: -100% 0;
+  }
+  100% {
+    mask-position: 200% 0;
+    -webkit-mask-position: 200% 0;
+  }
+}
+
+.dot-scan-active {
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.1) 20%,
+    rgba(0, 0, 0, 1) 50%,
+    rgba(0, 0, 0, 0.1) 80%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.1) 20%,
+    rgba(0, 0, 0, 1) 50%,
+    rgba(0, 0, 0, 0.1) 80%,
+    transparent 100%
+  );
+  mask-size: 200% 100%;
+  -webkit-mask-size: 200% 100%;
+  animation: dotScanSweep 1.8s var(--curve-primary) infinite;
+}
+
+/* Exact 4-Second Sine Wave Breathing Cycle for Shield Core */
+@keyframes shieldCoreBreathing {
+  0%, 100% {
+    transform: scale(1.0);
+    opacity: 0.96;
+  }
+  50% {
+    transform: scale(1.028);
+    opacity: 1.0;
+  }
+}
+
+/* Accelerated 2-Second Scan Mode Breathing */
+@keyframes shieldCoreScanBreathing {
+  0%, 100% {
+    transform: scale(1.0);
+    opacity: 0.92;
+  }
+  50% {
+    transform: scale(1.045);
+    opacity: 1.0;
+  }
+}
+
+.shield-breathing-idle {
+  animation: shieldCoreBreathing 4s ease-in-out infinite;
+}
+
+.shield-breathing-scan {
+  animation: shieldCoreScanBreathing 2s ease-in-out infinite;
+}
+
+/* Clean 240ms Snap Notification Entrance (No Bounce) */
+@keyframes notifySnapEntrance {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.notify-snap {
+  animation: notifySnapEntrance 240ms var(--curve-snap) forwards;
+}

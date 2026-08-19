@@ -1,0 +1,15 @@
+{
+  "name": "cybershield-agent",
+  "version": "1.0.0",
+  "description": "Native Endpoint Agent for CyberShield",
+  "main": "index.js",
+  "bin": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "build": "npx pkg . --targets node18-win-x64 --output cybershield-agent.exe"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "systeminformation": "^5.21.0"
+  }
+}
