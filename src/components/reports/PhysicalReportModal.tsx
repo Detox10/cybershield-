@@ -85,7 +85,7 @@ export const PhysicalReportModal: React.FC<PhysicalReportModalProps> = ({
     const rows = scannedFiles
       .map(
         (f) =>
-          `"${f.name}","${f.size}","${f.sha256}","${f.entropy}","${f.verdict}","${f.positives}/${f.totalEngines}","${f.severity}","${f.quarantined}","${f.timestamp}"`
+          `"${f.name || ""}","${f.size || ""}","${f.sha256 || ""}","${f.entropy ?? 0}","${f.verdict || ""}","${f.positives ?? 0}/${f.totalEngines ?? 72}","${f.severity || "CLEAN"}","${f.quarantined ?? false}","${f.timestamp || ""}"`
       )
       .join("\n");
     const blob = new Blob([headers + rows], { type: "text/csv;charset=utf-8;" });
@@ -273,14 +273,14 @@ export const PhysicalReportModal: React.FC<PhysicalReportModalProps> = ({
                         </td>
                         <td className="p-3">
                           <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                            f.entropy > 7.5 ? "bg-rose-950/80 text-rose-400 border border-rose-800" : "bg-emerald-950/80 text-emerald-400 border border-emerald-800"
+                            (f.entropy ?? 0) > 7.5 ? "bg-rose-950/80 text-rose-400 border border-rose-800" : "bg-emerald-950/80 text-emerald-400 border border-emerald-800"
                           }`}>
-                            {f.entropy.toFixed(2)}/8.0
+                            {(f.entropy ?? 0).toFixed(2)}/8.0
                           </span>
                         </td>
                         <td className="p-3">
-                          <span className={`font-bold ${f.positives > 0 ? "text-rose-400" : "text-emerald-400"}`}>
-                            {f.positives}/{f.totalEngines} Engines
+                          <span className={`font-bold ${(f.positives ?? 0) > 0 ? "text-rose-400" : "text-emerald-400"}`}>
+                            {f.positives ?? 0}/{f.totalEngines ?? 72} Engines
                           </span>
                         </td>
                         <td className="p-3">
