@@ -16,6 +16,7 @@ import {
   Moon,
   Sparkles,
   ShieldCheck,
+  Mail,
 } from "lucide-react";
 import { NavTab, ShieldCoreState } from "@/types/cybershield";
 import GeometricSecurityGauge from "./GeometricSecurityGauge";
@@ -43,6 +44,7 @@ export default function DesktopSidebar({
 
   const NAV_ITEMS = [
     { id: "dashboard" as NavTab, label: "Command Center", icon: Shield },
+    { id: "email" as NavTab, label: "Email Security", icon: Mail },
     { id: "scan" as NavTab, label: "Deep File Scan", icon: FileSearch },
     { id: "assistant" as NavTab, label: "AI Workspace", icon: Bot },
     { id: "threats" as NavTab, label: "Threat Intel", icon: AlertTriangle },

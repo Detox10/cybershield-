@@ -1,0 +1,161 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Agent {
+  id              String   @id @default(uuid())
+  hostname        String
+  osBuild         String?
+  credentialSecret String   // Device-specific secret for auth
+  enrolledAt      DateTime @default(now())
+  lastSeenAt      DateTime @default(now())
+  isActive        Boolean  @default(true)
+  
+  // Capabilities flag
+  hasAdminPrivileges Boolean @default(false)
+  
+  telemetry TelemetrySnapshot[]
+  events    CyberEvent[]
+}
+
+model TelemetrySnapshot {
+  id        String   @id @default(uuid())
+  agentId   String
+  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  timestamp DateTime @default(now())
+  
+  // High Freq
+  cpuLoadPercent Float
+  memUsagePercent Float
+  rxMbps Float
+  txMbps Float
+  
+  // Med/Low Freq (stored as JSON)
+  processes          String? // JSON string
+  services           String? // JSON string
+  networkConnections String? // JSON string
+}
+
+model CyberEvent {
+  eventId        String   @id @default(uuid())
+  deviceId       String
+  device         Agent    @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  organizationId String   @default("default-org")
+  timestamp      DateTime @default(now())
+  
+  type           String   // e.g. "MALWARE_DETECTED", "PROCESS_STARTED"
+  severity       String   // "INFO", "WARNING", "HIGH", "CRITICAL"
+  source         String   // e.g. "Endpoint Security Scanner"
+  
+  // Metadata & Evidence
+  processName    String?
+  commandLine    String?
+  fileHash       String?  // Real SHA-256
+  networkInfo    String?
+  evidence       String?  // JSON string
+  status         String   @default("OPEN") // "OPEN", "QUARANTINED", "BLOCKED", "MITIGATED"
+}
+
+model Incident {
+  id              String   @id @default(uuid())
+  title           String
+  severity        String   // LOW, MEDIUM, HIGH, CRITICAL
+  status          String   @default("INVESTIGATING") // INVESTIGATING, RESOLVED
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  emailAnalysis   EmailAnalysis? 
+  evidence        Evidence[]
+  
+  // Structured AI Report
+  aiSummary           String?   
+  aiSeverity          String?
+  aiConfidence        String?
+  aiEvidence          String?    // JSON
+  aiTimeline          String?    // JSON
+  aiTechniques        String?    // JSON
+  aiRecommendations   String?    // JSON
+}
+
+model Evidence {
+  id              String   @id @default(uuid())
+  incidentId      String
+  incident        Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  type            String   // EMAIL_ATTACHMENT, EMAIL_URL, ENDPOINT_PROCESS, ENDPOINT_NETWORK, ENDPOINT_FILE
+  source          String   // EMAIL_ANALYZER, WINDOWS_AGENT
+  timestamp       DateTime @default(now())
+  hash            String?  // File hash or process hash
+  value           String?   // URL, Filename, Process Path, IP
+  metadata        String?   // JSON for extra data
+  confidence      Float?   // Correlation confidence score
+}
+
+model EmailAnalysis {
+  id              String   @id @default(uuid())
+  incidentId      String?  @unique
+  incident        Incident? @relation(fields: [incidentId], references: [id])
+  
+  subject         String?
+  sender          String?
+  recipient       String?
+  date            DateTime?
+  
+  // Auth Results - Observed in Message Headers
+  observedSpf     String?
+  observedDkim    String?
+  observedDmarc   String?
+  
+  sourceIp        String?
+  
+  // Risk Score
+  riskScore       Int      @default(0) // 0-100
+  riskLevel       String   // LOW, MEDIUM, HIGH
+  
+  headers         EmailHeader[]
+  urls            EmailUrl[]
+  attachments     EmailAttachment[]
+  threatIndicators ThreatIndicator[]
+}
+
+model EmailHeader {
+  id              String   @id @default(uuid())
+  emailAnalysisId String
+  emailAnalysis   EmailAnalysis @relation(fields: [emailAnalysisId], references: [id], onDelete: Cascade)
+  key             String
+  value           String   
+}
+
+model EmailUrl {
+  id              String   @id @default(uuid())
+  emailAnalysisId String
+  emailAnalysis   EmailAnalysis @relation(fields: [emailAnalysisId], references: [id], onDelete: Cascade)
+  url             String   
+  domain          String?
+  riskLevel       String   // SAFE, SUSPICIOUS, MALICIOUS, UNKNOWN
+}
+
+model EmailAttachment {
+  id              String   @id @default(uuid())
+  emailAnalysisId String
+  emailAnalysis   EmailAnalysis @relation(fields: [emailAnalysisId], references: [id], onDelete: Cascade)
+  filename        String
+  mimeType        String?
+  sha256          String?
+  riskLevel       String   // SAFE, SUSPICIOUS, MALICIOUS, UNKNOWN
+}
+
+model ThreatIndicator {
+  id              String   @id @default(uuid())
+  emailAnalysisId String
+  emailAnalysis   EmailAnalysis @relation(fields: [emailAnalysisId], references: [id], onDelete: Cascade)
+  type            String   // IP, DOMAIN, HASH
+  value           String
+  reputation      String   // SAFE, SUSPICIOUS, MALICIOUS, UNKNOWN
+  source          String   // e.g., VirusTotal
+}

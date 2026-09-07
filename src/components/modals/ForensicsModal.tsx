@@ -35,9 +35,12 @@ interface ForensicsModalProps {
 }
 
 export const ForensicsModal: React.FC<ForensicsModalProps> = ({ incident, onClose }) => {
-  const [activeTab, setActiveTab] = useState<"overview" | "tree" | "intelligence" | "trace">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "attack_path" | "tree" | "intelligence" | "trace" | "ai_report">("overview");
   const [vtData, setVtData] = useState<any>(null);
   const [vtLoading, setVtLoading] = useState(false);
+  
+  const [aiReport, setAiReport] = useState<any>(null);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
   useEffect(() => {
     if (!incident) return;
@@ -155,9 +158,11 @@ export const ForensicsModal: React.FC<ForensicsModalProps> = ({ incident, onClos
           <div className="flex-none px-6 pt-4 border-b border-white/[0.04] flex items-center gap-6 z-10 bg-[#0A0C10]/50 backdrop-blur-xl">
             {[
               { id: "overview", label: "Overview", icon: Activity },
-              { id: "tree", label: "Process Tree", icon: Network },
+              { id: "attack_path", label: "Attack Path", icon: Network },
+              { id: "tree", label: "Process Tree", icon: Server },
               { id: "intelligence", label: "Intelligence", icon: Database },
               { id: "trace", label: "eBPF Trace", icon: Terminal },
+              { id: "ai_report", label: "AI Report", icon: ShieldCheck },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -237,6 +242,56 @@ export const ForensicsModal: React.FC<ForensicsModalProps> = ({ incident, onClos
                       At {incident.timestamp}, Sentinel detected unauthorized memory allocation attempts targeting `{incident.vector.split("•")[1]?.trim() || "system process"}` on `{incident.targetHost}`.
                       The execution pattern strictly aligns with known {incident.mitreTtp} tactics. The AI engine immediately injected a containment hook via eBPF, terminating the process tree and preventing lateral movement. No data exfiltration occurred.
                     </p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* ATTACK PATH TAB */}
+            {activeTab === "attack_path" && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full flex flex-col">
+                <div className="flex-1 bg-[#12141A] rounded-2xl border border-white/[0.04] p-8 relative overflow-hidden flex items-center justify-center">
+                  
+                  {/* Decorative background grid */}
+                  <div className="absolute inset-0 bg-[url('https://transparenttextures.com/patterns/cubes.png')] opacity-[0.03]" />
+                  
+                  <div className="relative z-10 flex flex-col md:flex-row items-center gap-4 w-full justify-center">
+                    {/* Node 1: Email */}
+                    <div className="bg-[#1A1D24] border border-blue-500/30 rounded-xl p-4 shadow-lg flex flex-col items-center min-w-[200px]">
+                      <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center mb-3 text-blue-400">
+                        <Terminal className="w-5 h-5" />
+                      </div>
+                      <div className="text-sm font-bold text-white text-center">Phishing Email</div>
+                      <div className="text-[10px] font-mono text-slate-500 text-center mt-1">SPF: FAIL | DKIM: FAIL</div>
+                      <div className="text-[10px] font-mono text-blue-400 text-center mt-2 bg-blue-500/10 px-2 py-1 rounded">Subject: Invoice_2026.pdf</div>
+                    </div>
+                    
+                    {/* Line */}
+                    <div className="w-0.5 h-8 md:w-16 md:h-0.5 bg-blue-500/50" />
+                    
+                    {/* Node 2: Attachment */}
+                    <div className="bg-[#1A1D24] border border-amber-500/30 rounded-xl p-4 shadow-lg flex flex-col items-center min-w-[200px]">
+                      <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center mb-3 text-amber-400">
+                        <Database className="w-5 h-5" />
+                      </div>
+                      <div className="text-sm font-bold text-white text-center">Malicious Attachment</div>
+                      <div className="text-[10px] font-mono text-slate-500 text-center mt-1">Invoice_2026.pdf.exe</div>
+                      <div className="text-[10px] font-mono text-amber-400 text-center mt-2 bg-amber-500/10 px-2 py-1 rounded truncate max-w-[180px]" title="e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855">SHA256: e3b0...b855</div>
+                    </div>
+
+                    {/* Line */}
+                    <div className="w-0.5 h-8 md:w-16 md:h-0.5 bg-rose-500/50 shadow-[0_0_8px_rgba(244,63,94,0.5)]" />
+                    
+                    {/* Node 3 (Endpoint Execution) */}
+                    <div className="bg-rose-950/40 border border-rose-500/50 rounded-xl p-4 shadow-[0_0_15px_rgba(244,63,94,0.15)] flex flex-col items-center min-w-[200px] relative">
+                      <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-rose-500 rounded-full animate-ping" />
+                      <div className="w-10 h-10 rounded-full bg-rose-500/20 flex items-center justify-center mb-3 text-rose-400">
+                        <Cpu className="w-5 h-5" />
+                      </div>
+                      <div className="text-sm font-bold text-white text-center">Endpoint Execution</div>
+                      <div className="text-[10px] font-mono text-rose-400/80 text-center mt-1">PID: 9182 on {incident.targetHost}</div>
+                      <div className="text-[10px] font-bold text-rose-400 text-center mt-2 bg-rose-500/10 px-2 py-1 rounded border border-rose-500/20">Blocked by eBPF</div>
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -397,6 +452,89 @@ export const ForensicsModal: React.FC<ForensicsModalProps> = ({ incident, onClos
                     </div>
                   </div>
                 </div>
+              </motion.div>
+            )}
+
+            {/* AI REPORT TAB */}
+            {activeTab === "ai_report" && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full flex flex-col">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-lg font-bold text-white">AI Forensic Investigation</h3>
+                  {!aiReport && !isGeneratingReport && (
+                    <button 
+                      onClick={async () => {
+                        setIsGeneratingReport(true);
+                        try {
+                          const res = await fetch("/api/ai/forensics", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ incidentDetails: incident })
+                          });
+                          const data = await res.json();
+                          if (data.success) setAiReport(data.report);
+                        } catch (e) {
+                          console.error(e);
+                        } finally {
+                          setIsGeneratingReport(false);
+                        }
+                      }}
+                      className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-lg text-sm transition-colors"
+                    >
+                      Generate Report
+                    </button>
+                  )}
+                </div>
+
+                {isGeneratingReport ? (
+                   <div className="flex flex-col items-center justify-center h-64 space-y-4">
+                     <div className="w-8 h-8 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
+                     <div className="text-sm text-slate-400 font-mono">Synthesizing telemetry & threat intelligence...</div>
+                   </div>
+                ) : aiReport ? (
+                  <div className="space-y-6">
+                    <div className="bg-[#12141A] rounded-2xl p-6 border border-white/[0.04]">
+                      <div className="flex justify-between items-start mb-4">
+                        <h4 className="text-sm font-bold text-blue-400">Executive Summary</h4>
+                        <div className="text-[10px] font-bold text-emerald-400 border border-emerald-500/20 bg-emerald-500/10 px-2 py-1 rounded">
+                          Confidence: {aiReport.confidenceScore}% <span className="ml-1 opacity-70">· AI_ANALYSIS</span>
+                        </div>
+                      </div>
+                      <p className="text-sm text-slate-300">{aiReport.executiveSummary}</p>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="bg-[#12141A] rounded-2xl p-6 border border-white/[0.04]">
+                        <h4 className="text-sm font-bold text-rose-400 mb-4">Threat Actor Attribution</h4>
+                        <p className="text-sm text-slate-300">{aiReport.threatActorAttribution}</p>
+                      </div>
+                      
+                      <div className="bg-[#12141A] rounded-2xl p-6 border border-white/[0.04]">
+                        <h4 className="text-sm font-bold text-amber-400 mb-4">MITRE ATT&CK Techniques</h4>
+                        <ul className="list-disc pl-5 space-y-2 text-sm text-slate-300">
+                          {aiReport.mitreTechniques?.map((t: string, i: number) => <li key={i}>{t}</li>)}
+                        </ul>
+                      </div>
+                    </div>
+
+                    <div className="bg-[#12141A] rounded-2xl p-6 border border-white/[0.04]">
+                        <h4 className="text-sm font-bold text-emerald-400 mb-4">Remediation Action Plan</h4>
+                        <ul className="space-y-2">
+                          {aiReport.remediationSteps?.map((step: string, i: number) => (
+                            <li key={i} className="flex items-start gap-3">
+                              <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs shrink-0 mt-0.5">{i+1}</span>
+                              <span className="text-sm text-slate-300">{step}</span>
+                            </li>
+                          ))}
+                        </ul>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex-1 bg-[#12141A] rounded-2xl border border-white/[0.04] p-8 flex flex-col items-center justify-center text-center">
+                    <ShieldCheck className="w-12 h-12 text-slate-600 mb-4" />
+                    <h3 className="text-lg font-bold text-white mb-2">No Report Generated</h3>
+                    <p className="text-sm text-slate-400 max-w-md">Click the button above to run an AI-powered correlation analysis on this incident's telemetry data.</p>
+                  </div>
+                )}
               </motion.div>
             )}
 

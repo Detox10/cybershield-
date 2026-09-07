@@ -65,6 +65,14 @@ interface HostTelemetry {
   };
 }
 
+interface TelemetryProcess {
+  pid: number;
+  name: string;
+  cpu: number;
+  mem: number;
+  user: string;
+}
+
 export const DeviceDiagnosticsFlow: React.FC = () => {
   const [hostData, setHostData] = useState<HostTelemetry | null>(null);
   const [browserData, setBrowserData] = useState<{
@@ -76,8 +84,38 @@ export const DeviceDiagnosticsFlow: React.FC = () => {
     batteryLevel: string;
     screenResolution: string;
   } | null>(null);
+  const [processes, setProcesses] = useState<TelemetryProcess[]>([]);
+  const [agentId, setAgentId] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [lastRefreshed, setLastRefreshed] = useState<string>("");
+  const [killingPid, setKillingPid] = useState<number | null>(null);
+  
+  const handleKillProcess = async (pid: number, name: string) => {
+    if (!confirm(`Are you sure you want to terminate ${name} (PID: ${pid})?`)) return;
+    
+    setKillingPid(pid);
+    try {
+      const res = await fetch("/api/commands", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          agentId: agentId || "demo-agent", // Ideally we have the real agent ID here
+          action: "KILL_PROCESS",
+          pid: pid.toString(),
+          processName: name,
+        })
+      });
+      if (res.ok) {
+        alert("Command queued. The agent will execute it shortly.");
+      } else {
+        alert("Failed to queue command.");
+      }
+    } catch (e) {
+      alert("Error queueing command.");
+    } finally {
+      setKillingPid(null);
+    }
+  };
 
   const fetchHostDiagnostics = async () => {
     setIsLoading(true);
@@ -87,6 +125,18 @@ export const DeviceDiagnosticsFlow: React.FC = () => {
       if (res.ok) {
         const data = await res.json();
         setHostData(data);
+      }
+
+      // Fetch advanced telemetry (processes)
+      const telRes = await fetch("/api/telemetry");
+      if (telRes.ok) {
+        const telData = await telRes.json();
+        if (telData.advanced?.processes) {
+          setProcesses(telData.advanced.processes);
+        }
+        if (telData.fleet && telData.fleet.length > 0) {
+           setAgentId(telData.fleet[0].agentId);
+        }
       }
 
       // 2. Query real client Browser WebAPIs
@@ -301,6 +351,60 @@ export const DeviceDiagnosticsFlow: React.FC = () => {
               </span>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Live Processes Section */}
+      <div className="bg-[#111317] border border-white/[0.08] rounded-3xl p-6 shadow-xl space-y-4">
+        <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
+          <h3 className="text-sm font-bold text-white uppercase font-mono tracking-wider">
+            Active Host Processes (Live Telemetry)
+          </h3>
+          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-800 text-emerald-400">
+            {processes.length} Monitored
+          </span>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr className="border-b border-white/10 text-slate-400 font-mono text-[10px] uppercase">
+                <th className="py-3 px-4">PID</th>
+                <th className="py-3 px-4">Process Name</th>
+                <th className="py-3 px-4">CPU %</th>
+                <th className="py-3 px-4">Mem %</th>
+                <th className="py-3 px-4 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="text-white font-mono">
+              {processes.map((proc) => (
+                <tr key={proc.pid} className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors">
+                  <td className="py-2.5 px-4 text-slate-300">{proc.pid}</td>
+                  <td className="py-2.5 px-4 font-bold max-w-[200px] truncate" title={proc.name}>
+                    {proc.name}
+                  </td>
+                  <td className="py-2.5 px-4 text-amber-400">{proc.cpu}%</td>
+                  <td className="py-2.5 px-4 text-emerald-400">{proc.mem}%</td>
+                  <td className="py-2.5 px-4 text-right">
+                    <button
+                      onClick={() => handleKillProcess(proc.pid, proc.name)}
+                      disabled={killingPid === proc.pid}
+                      className="px-3 py-1.5 rounded-lg bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-800 text-[10px] font-bold transition-all disabled:opacity-50"
+                    >
+                      {killingPid === proc.pid ? "QUEUING..." : "KILL"}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {processes.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="py-6 text-center text-slate-500 font-mono">
+                    No process telemetry available. Ensure agent is running.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

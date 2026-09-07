@@ -73,7 +73,7 @@ export default function WeeklyDigestModal({ isOpen, onClose }: WeeklyDigestModal
                 </span>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                More resilient than <strong className="text-slate-800 dark:text-slate-200">92% of enterprise endpoints</strong>.
+                More resilient than <strong className="text-slate-800 dark:text-slate-200">92% of enterprise endpoints</strong> <span className="text-[10px] text-slate-500 ml-2">· [SIMULATED]</span>.
               </p>
             </div>
 

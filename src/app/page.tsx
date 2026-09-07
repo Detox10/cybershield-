@@ -15,6 +15,7 @@ import DeviceDiagnosticsFlow from "@/components/flows/DeviceDiagnosticsFlow";
 import ZeroTrustRulesFlow from "@/components/flows/ZeroTrustRulesFlow";
 import SettingsFlow from "@/components/flows/SettingsFlow";
 import TerminalFlow from "@/components/flows/TerminalFlow";
+import EmailSecurityFlow from "@/components/flows/EmailSecurityFlow";
 import LoginPage from "@/components/auth/LoginPage";
 import CursorInspectorHUD from "@/components/hud/CursorInspectorHUD";
 import { UserSession } from "@/components/auth/AuthModal";
@@ -254,6 +255,20 @@ export default function CyberShieldApp() {
                   className="p-8 max-w-7xl mx-auto w-full space-y-6"
                 >
                   <SettingsFlow />
+                </motion.div>
+              )}
+
+              {/* 11. Email Security */}
+              {activeTab === "email" && (
+                <motion.div
+                  key="email"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.24, ease: [0.65, 0, 0.35, 1] }}
+                  className="p-8 max-w-7xl mx-auto w-full space-y-6"
+                >
+                  <EmailSecurityFlow />
                 </motion.div>
               )}
             </AnimatePresence>

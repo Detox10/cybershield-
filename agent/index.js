@@ -1,14 +1,29 @@
 const si = require('systeminformation');
 const axios = require('axios');
 const os = require('os');
+const fs = require('fs');
+const path = require('path');
+const { exec } = require('child_process');
 
 // Configuration
-const DASHBOARD_URL = 'http://localhost:3000/api/telemetry';
-const SECURITY_EVENTS_URL = 'http://localhost:3000/api/telemetry/security-events';
-const AUTH_TOKEN = 'Bearer CS-AGENT-SECRET-2026';
+const BASE_URL = 'http://localhost:3000';
+const DASHBOARD_URL = `${BASE_URL}/api/telemetry`;
+const SECURITY_EVENTS_URL = `${BASE_URL}/api/telemetry/security-events`;
+const COMMANDS_URL = `${BASE_URL}/api/commands`;
+
 const FAST_POLL_MS = 1500;
 const SLOW_POLL_MS = 10000;
 const SECURITY_SCAN_MS = 5000; // Scan processes every 5s
+
+// Load Authentication Token
+let AUTH_TOKEN = '';
+try {
+  const authData = JSON.parse(fs.readFileSync(path.join(__dirname, 'authToken.json'), 'utf-8'));
+  AUTH_TOKEN = `Bearer ${authData.authToken}`;
+} catch (e) {
+  console.error("[!] Error: Could not load authToken.json. Please run 'node enroll.js' first.");
+  process.exit(1);
+}
 
 console.log("=========================================");
 console.log(" CYBERSHIELD ENDPOINT AGENT [Windows]");
@@ -154,12 +169,13 @@ for (const core of initialCpus) {
 // Fast Loop: Real-time CPU/RAM every 1.5 seconds
 async function collectFastTelemetry() {
   try {
-    const [mem, networkStats, processes, diskLayout, cpuBrand] = await Promise.all([
+    const [mem, networkStats, processes, diskLayout, cpuBrand, cpuLoadData] = await Promise.all([
       si.mem(),
       si.networkStats(),
       si.processes(),
       si.fsSize(),
-      si.cpu()
+      si.cpu(),
+      si.currentLoad()
     ]);
 
     // Network delta calculation
@@ -203,27 +219,7 @@ async function collectFastTelemetry() {
       usedDisk += drive.used;
     }
 
-    // CPU calculation using os.cpus()
-    const cpus = os.cpus();
-    let idle = 0;
-    let total = 0;
-    for (const core of cpus) {
-      for (const type in core.times) {
-        total += core.times[type];
-      }
-      idle += core.times.idle;
-    }
-    
-    let loadPercent = 0;
-    if (prevCpuTotal !== 0) {
-      const idleDelta = idle - prevCpuIdle;
-      const totalDelta = total - prevCpuTotal;
-      if (totalDelta > 0) {
-        loadPercent = Math.round(100 - (100 * idleDelta / totalDelta));
-      }
-    }
-    prevCpuIdle = idle;
-    prevCpuTotal = total;
+    let loadPercent = Math.round(cpuLoadData.currentLoad);
 
     // Ensure it doesn't report 0% or negative if math rounds oddly
     loadPercent = Math.max(1, Math.min(100, loadPercent));
@@ -288,6 +284,72 @@ async function collectFastTelemetry() {
   }
 }
 
+// Command Polling Loop
+async function pollCommands() {
+  try {
+    const response = await axios.get(COMMANDS_URL, {
+      headers: { 'Authorization': AUTH_TOKEN }
+    });
+
+    const command = response.data.command;
+    if (command && command.action === 'KILL_PROCESS') {
+      console.log(`\n[!] Received Command: KILL_PROCESS | PID: ${command.pid} | TARGET: ${command.processName}`);
+      
+      // Verify process name matches before killing
+      const processData = await si.processes();
+      const targetProc = processData.list.find(p => p.pid === parseInt(command.pid));
+
+      let success = false;
+      let output = "";
+      let errorStr = "";
+
+      if (!targetProc) {
+        errorStr = `Process with PID ${command.pid} not found running on system.`;
+        console.error(`[-] Validation failed: ${errorStr}`);
+      } else if (targetProc.name.toLowerCase() !== command.processName.toLowerCase()) {
+        errorStr = `Process name mismatch! Expected '${command.processName}', but PID ${command.pid} is '${targetProc.name}'.`;
+        console.error(`[-] Validation failed: ${errorStr}`);
+      } else {
+        console.log(`[+] Validation passed. Terminating ${targetProc.name}...`);
+        try {
+          if (os.platform() === 'win32') {
+            await new Promise((resolve, reject) => {
+              exec(`taskkill /F /PID ${command.pid}`, (err, stdout, stderr) => {
+                if (err) reject(err);
+                else resolve(stdout);
+              });
+            });
+          } else {
+            process.kill(command.pid, 'SIGKILL');
+          }
+          success = true;
+          output = `Process ${command.processName} (PID: ${command.pid}) successfully terminated.`;
+          console.log(`[+] ${output}`);
+        } catch (e) {
+          errorStr = `Failed to terminate: ${e.message}`;
+          console.error(`[-] ${errorStr}`);
+        }
+      }
+
+      // Report result back to dashboard
+      await axios.post(COMMANDS_URL, {
+        isResult: true,
+        commandId: command.commandId,
+        action: command.action,
+        pid: command.pid,
+        processName: command.processName,
+        success,
+        output,
+        error: errorStr
+      }, {
+        headers: { 'Authorization': AUTH_TOKEN, 'Content-Type': 'application/json' }
+      });
+    }
+  } catch (error) {
+    // Silently ignore polling errors
+  }
+}
+
 // Boot Sequence
 async function startAgent() {
   // 1. Instantly fire fast telemetry so the dashboard populates!
@@ -297,6 +359,7 @@ async function startAgent() {
   setInterval(collectFastTelemetry, FAST_POLL_MS);
   setInterval(collectSlowTelemetry, SLOW_POLL_MS);
   setInterval(runSecurityScan, SECURITY_SCAN_MS);
+  setInterval(pollCommands, 3000); // Poll commands every 3s
 
   // 3. Kick off the slow OS scrapes in the background (Windows services can take 5+ seconds)
   collectSlowTelemetry(); 

@@ -49,7 +49,7 @@ Provide a comprehensive, authoritative, production-grade cybersecurity response 
    - Provide copyable Linux bash / iptables commands where relevant
 4. **Zero-Trust Hardening Recommendations**
 
-Ensure your response is highly specific to the user's query and context. Avoid generic placeholder text.`,
+Ensure your response is highly specific to the user's query and context. Avoid generic filler text.`,
                       },
                     ],
                   },

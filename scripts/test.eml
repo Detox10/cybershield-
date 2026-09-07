@@ -1,0 +1,18 @@
+From: attacker@evil.com
+To: victim@company.com
+Subject: Urgent Invoice attached
+Date: Mon, 31 Aug 2026 10:00:00 +0000
+Content-Type: multipart/mixed; boundary="BOUNDARY"
+
+--BOUNDARY
+Content-Type: text/plain; charset="utf-8"
+
+Please see the attached invoice.
+
+--BOUNDARY
+Content-Type: application/x-msdownload; name="invoice.exe"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="invoice.exe"
+
+SGVsbG8gV29ybGQK
+--BOUNDARY--

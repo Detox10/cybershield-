@@ -11,6 +11,7 @@ import {
   Bell,
   Search,
   Smartphone,
+  Mail,
 } from "lucide-react";
 import { NavTab } from "@/types/cybershield";
 
@@ -29,6 +30,7 @@ export default function MobilePillNav({
 }: MobilePillNavProps) {
   const tabs = [
     { id: "dashboard" as NavTab, label: "Shield", icon: Shield },
+    { id: "email" as NavTab, label: "Email", icon: Mail },
     { id: "studio" as NavTab, label: "Studio", icon: Smartphone },
     { id: "scan" as NavTab, label: "Scan", icon: FileSearch },
     { id: "assistant" as NavTab, label: "AI", icon: Bot },

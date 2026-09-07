@@ -92,7 +92,7 @@ export const DownloadShareModal: React.FC<DownloadShareModalProps> = ({
         ebpf_telemetry: "ACTIVE",
         zero_trust_status: "ENFORCED",
       },
-      quarantine_vault_count: 927,
+      quarantine_vault_count: "927 · SIMULATED",
       backend_portal_access: `${currentUrl}/admin`,
     };
 

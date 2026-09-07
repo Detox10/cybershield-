@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const DASHBOARD_URL = 'http://localhost:3000/api/telemetry';
+const DASHBOARD_URL = 'https://cybershield-beryl-two.vercel.app/api/telemetry';
 const AUTH_TOKEN = 'Bearer CS-AGENT-SECRET-2026';
 const POLL_MS = 2000;
 

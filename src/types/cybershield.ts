@@ -3,6 +3,7 @@ export type ShieldCoreState = "IDLE" | "SCANNING" | "SECURE" | "WARNING" | "THRE
 export type NavTab = 
   | "dashboard" 
   | "scan" 
+  | "email"
   | "assistant" 
   | "threats" 
   | "diagnostics" 

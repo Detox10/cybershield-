@@ -150,7 +150,7 @@ export const RadialRevenueDonut: React.FC = () => {
       {/* Bottom Summary Pill */}
       <div className="text-center pt-2 border-t border-white/[0.04]">
         <span className="text-xs font-mono text-slate-400">
-          32,064 Attacks Mitigated • 0 Active Leaks
+          32,064 Attacks Mitigated • 0 Active Leaks <span className="text-[10px] ml-1">· SIMULATED</span>
         </span>
       </div>
     </div>

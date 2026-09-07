@@ -248,7 +248,7 @@ export const useTelemetryStore = create<TelemetryState>((set, get) => ({
     
     const now = new Date();
     const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const idSuffix = Math.floor(Math.random() * 10000);
+    const idSuffix = crypto.randomUUID().split('-')[0];
     
     let newEvent: TimelineEvent;
     let newIncident: ThreatIncident;
