@@ -4,7 +4,7 @@ const globalForRedis = globalThis as unknown as {
   redis: Redis | undefined;
 };
 
-// Fallback to in-memory store if Redis is not configured (useful for hackathons)
+// Fallback to in-memory store since Docker/Redis is not installed locally
 class InMemoryRedis {
   private store = new Map<string, any>();
 
@@ -51,3 +51,4 @@ export const redis =
 if (process.env.NODE_ENV !== 'production' && process.env.REDIS_URL) {
   globalForRedis.redis = redis;
 }
+

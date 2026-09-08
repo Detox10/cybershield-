@@ -4,6 +4,7 @@ const os = require('os');
 const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
+const crypto = require('crypto');
 
 // Configuration
 const BASE_URL = 'http://localhost:3000';
@@ -108,15 +109,18 @@ async function runSecurityScan() {
     const processData = await si.processes();
     const procs = processData.list || [];
 
+    // Simple IoC blacklist for demonstration
+    const maliciousNames = ["dummy-malware", "wannacry.exe", "mimikatz.exe", "test-malware.exe"];
+
     for (const p of procs) {
       const pName = (p.name || "").toLowerCase();
       const pCmd = (p.command || "").toLowerCase();
       
-      // Heuristic detection logic (looking for our dummy malware)
-      if (pName.includes("dummy-malware") || pCmd.includes("dummy-malware")) {
-        // We found a threat! 
-        // In a real EDR, we'd hash the binary on disk. We simulate the hash here.
-        const simulatedHash = "8d3493405786358dbb23b37805ec6b0b435ff29c54e0b0e51ee127bcfeb5d1c2"; // Real WannaCry hash to trigger VT!
+      const isMalicious = maliciousNames.some(badName => pName.includes(badName) || pCmd.includes(badName));
+
+      if (isMalicious) {
+        // Compute an actual hash of the process name (simulating a memory signature hash)
+        const hash = crypto.createHash('sha256').update(pName + pCmd).digest('hex');
 
         const threatPayload = {
           threatName: "Suspicious Node Execution",
@@ -127,14 +131,14 @@ async function runSecurityScan() {
           pid: p.pid,
           processName: p.name,
           commandLine: p.command,
-          hash: simulatedHash,
+          hash: hash,
           timestamp: new Date().toISOString()
         };
 
         console.log(`\n[!!!] THREAT DETECTED: ${p.name} (PID: ${p.pid})`);
+        console.log(`[*] Computed Memory Signature Hash: ${hash}`);
         console.log(`[*] Sending Security Event to Cloud for AI Analysis...`);
 
-        // Send to backend
         try {
           await axios.post(SECURITY_EVENTS_URL, threatPayload, {
             headers: { 'Authorization': AUTH_TOKEN, 'Content-Type': 'application/json' },
@@ -144,8 +148,6 @@ async function runSecurityScan() {
           console.error(`[!] Failed to emit security event: ${e.message}`);
         }
 
-        // To prevent spamming the dashboard, we will exit the scan loop after finding one instance 
-        // in a real environment, we'd add it to a "known threats" local cache.
         break; 
       }
     }

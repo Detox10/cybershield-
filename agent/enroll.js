@@ -30,11 +30,11 @@ async function enrollAgent() {
       const { deviceId, deviceSecret } = response.data;
       const authToken = `${deviceId}:${deviceSecret}`;
 
-      fs.writeFileSync(AUTH_FILE_PATH, JSON.stringify({ authToken, deviceId }), 'utf-8');
+      fs.writeFileSync(AUTH_FILE_PATH, JSON.stringify({ authToken, deviceId }), { encoding: 'utf-8', mode: 0o600 });
       
       console.log(`[+] Enrollment successful!`);
       console.log(`[+] Device ID: ${deviceId}`);
-      console.log(`[+] Token saved to ${AUTH_FILE_PATH}`);
+      console.log(`[+] Token securely saved to ${AUTH_FILE_PATH}`);
       console.log(`\nYou can now run 'node index.js' to start telemetry.`);
     } else {
       console.error("[-] Enrollment failed:", response.data);
