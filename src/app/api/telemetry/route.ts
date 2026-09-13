@@ -89,13 +89,8 @@ export async function GET() {
 
     if (fleetArray.length === 0) {
       return NextResponse.json({
-        fleet: [],
-        cpu: { loadPercent: 0, model: "Waiting for Agent..." },
-        memory: { usagePercent: 0, usedGb: 0, totalGb: 0 },
-        network: { rxMbps: 0, txMbps: 0 },
-        host: { osBuild: "Waiting..." },
-        disk: { totalGb: 0, usedGb: 0, usagePercent: 0 },
-        advanced: { processes: [], networkConnections: [], services: [] }
+        telemetryStatus: "UNAVAILABLE",
+        fleet: []
       });
     }
 

@@ -2,13 +2,14 @@ import { NextResponse } from 'next/server';
 import { ServerDB } from '@/lib/serverDb';
 
 export async function GET() {
-  return NextResponse.json(ServerDB.getIncidents());
+  const incidents = await ServerDB.getIncidents();
+  return NextResponse.json(incidents);
 }
 
 export async function POST(req: Request) {
   try {
     const incident = await req.json();
-    ServerDB.addIncident(incident);
+    await ServerDB.addIncident(incident);
     return NextResponse.json({ success: true });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 400 });

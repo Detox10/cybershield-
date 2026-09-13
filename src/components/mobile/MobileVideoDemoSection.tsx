@@ -52,7 +52,7 @@ export const MobileVideoDemoSection: React.FC = () => {
       }, 900);
     }
     return () => clearInterval(interval);
-  }, [isPlaying]);
+  }, [isPlaying, DEMO_STEPS.length]);
 
   return (
     <section className="w-full py-10 px-4 flex flex-col items-center text-center">

@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import crypto from 'crypto';
 
 export interface CorrelatedEvent {
   confidence: number;
@@ -23,15 +24,18 @@ export class CorrelationEngine {
       
       if (match && match.emailAnalysis?.incidentId) {
         // High confidence match based on cryptographic hash
-        await prisma.evidence.create({
+        await prisma.cyberEvent.create({
           data: {
+            eventId: `evt-corr-${crypto.randomUUID()}`,
+            deviceId: event.deviceId || 'system',
             incidentId: match.emailAnalysis.incidentId,
             type: event.type === 'PROCESS_STARTED' ? 'ENDPOINT_PROCESS' : 'ENDPOINT_FILE',
-            source: 'WINDOWS_AGENT',
-            hash: hash,
-            value: event.processName || match.filename,
-            metadata: JSON.stringify(event),
-            confidence: 0.95
+            severity: 'HIGH',
+            source: 'Correlation Engine',
+            fileHash: hash,
+            processName: event.processName || match.filename,
+            evidence: JSON.stringify(event),
+            status: 'RESOLVED'
           }
         });
         
@@ -52,14 +56,17 @@ export class CorrelationEngine {
         // We take the most recent
         const match = potentialMatches[0];
         if (match.emailAnalysis?.incidentId) {
-          await prisma.evidence.create({
+          await prisma.cyberEvent.create({
             data: {
+              eventId: `evt-corr-${crypto.randomUUID()}`,
+              deviceId: event.deviceId || 'system',
               incidentId: match.emailAnalysis.incidentId,
               type: 'ENDPOINT_PROCESS',
-              source: 'WINDOWS_AGENT',
-              value: event.processName,
-              metadata: JSON.stringify(event),
-              confidence: 0.65
+              severity: 'WARNING',
+              source: 'Correlation Engine',
+              processName: event.processName,
+              evidence: JSON.stringify(event),
+              status: 'RESOLVED'
             }
           });
           
@@ -77,14 +84,17 @@ export class CorrelationEngine {
       
       const matchedUrl = urls.find(u => u.url.includes(event.networkInfo.remoteIp));
       if (matchedUrl && matchedUrl.emailAnalysis?.incidentId) {
-        await prisma.evidence.create({
+        await prisma.cyberEvent.create({
             data: {
+              eventId: `evt-corr-${crypto.randomUUID()}`,
+              deviceId: event.deviceId || 'system',
               incidentId: matchedUrl.emailAnalysis.incidentId,
               type: 'ENDPOINT_NETWORK',
-              source: 'WINDOWS_AGENT',
-              value: event.networkInfo.remoteIp,
-              metadata: JSON.stringify(event),
-              confidence: 0.85
+              severity: 'HIGH',
+              source: 'Correlation Engine',
+              networkInfo: event.networkInfo.remoteIp,
+              evidence: JSON.stringify(event),
+              status: 'RESOLVED'
             }
         });
         

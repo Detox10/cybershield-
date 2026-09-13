@@ -59,6 +59,9 @@ model CyberEvent {
   networkInfo    String?
   evidence       String?  // JSON string
   status         String   @default("OPEN") // "OPEN", "QUARANTINED", "BLOCKED", "MITIGATED"
+
+  incidentId     String?
+  incident       Incident? @relation(fields: [incidentId], references: [id])
 }
 
 model Incident {
@@ -71,7 +74,12 @@ model Incident {
   
   // Relations
   emailAnalysis   EmailAnalysis? 
-  evidence        Evidence[]
+  cyberEvents     CyberEvent[]
+
+  // Legacy ThreatIncident Fields from JSON mapping
+  cveTtp          String?
+  targetHost      String?
+  vector          String?
   
   // Structured AI Report
   aiSummary           String?   
@@ -83,18 +91,7 @@ model Incident {
   aiRecommendations   String?    // JSON
 }
 
-model Evidence {
-  id              String   @id @default(uuid())
-  incidentId      String
-  incident        Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
-  type            String   // EMAIL_ATTACHMENT, EMAIL_URL, ENDPOINT_PROCESS, ENDPOINT_NETWORK, ENDPOINT_FILE
-  source          String   // EMAIL_ANALYZER, WINDOWS_AGENT
-  timestamp       DateTime @default(now())
-  hash            String?  // File hash or process hash
-  value           String?   // URL, Filename, Process Path, IP
-  metadata        String?   // JSON for extra data
-  confidence      Float?   // Correlation confidence score
-}
+
 
 model EmailAnalysis {
   id              String   @id @default(uuid())
@@ -158,4 +155,48 @@ model ThreatIndicator {
   value           String
   reputation      String   // SAFE, SUSPICIOUS, MALICIOUS, UNKNOWN
   source          String   // e.g., VirusTotal
+}
+
+
+model PhysicalForensicReport {
+  reportId        String   @id
+  generatedAt     String
+  operator        String
+  deviceHostname  String
+  osRelease       String
+  cpuModel        String
+  gpuModel        String
+  ramUsage        String
+  primaryIp       String
+  scannedFilesCount Int
+  criticalThreatsCount Int
+  activeFirewallRulesCount Int
+  riskScore       Int
+  digitalSignature String
+  scannedFiles    String   // JSON payload of the file snapshot
+  createdAt       DateTime @default(now())
+}
+
+model ScannedFileRecord {
+  id              String   @id
+  name            String
+  size            String
+  type            String
+  sha256          String
+  md5             String?
+  sha1            String?
+  entropy         Float
+  isMalicious     Boolean
+  severity        String
+  positives       Int
+  totalEngines    Int
+  verdict         String
+  familyName      String?
+  mitreTtp        String?
+  timestamp       String
+  quarantined     Boolean
+  engineResults   String?  // JSON string
+  originalPath    String?
+  quarantineDate  String?
+  createdAt       DateTime @default(now())
 }

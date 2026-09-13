@@ -146,7 +146,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      source: "CYBERSHIELD_LOCAL_HEURISTIC_ENGINE",
+      source: "LOCAL HEURISTIC ANALYSIS",
       hash: cleanHash,
       positives: 0,
       totalEngines: 72,

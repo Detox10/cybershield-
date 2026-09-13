@@ -20,6 +20,7 @@ export default function EmailSecurityFlow() {
     try {
       const res = await fetch("/api/email/analyze", {
         method: "POST",
+        
         body: formData,
       });
       const data = await res.json();
@@ -51,6 +52,7 @@ export default function EmailSecurityFlow() {
     try {
       const res = await fetch("/api/email/analyze", {
         method: "POST",
+        
         body: formData,
       });
       const data = await res.json();

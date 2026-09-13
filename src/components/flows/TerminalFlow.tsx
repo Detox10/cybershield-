@@ -89,9 +89,16 @@ Type 'help' to see all available CLI commands.`,
         }
       } catch (e) {}
 
-      const files = CyberDatabase.getScannedFiles();
-      setTotalScansCount(files.length);
-      setQuarantinedCount(files.filter((f) => f.quarantined).length);
+      try {
+        const scansRes = await fetch("/api/db/scans");
+        if (scansRes.ok) {
+          const files = await scansRes.json();
+          setTotalScansCount(files.length);
+          setQuarantinedCount(files.filter((f: any) => f.quarantined).length);
+        }
+      } catch (e) {
+        console.error("Failed to fetch scans", e);
+      }
     };
 
     fetchLiveStats();
@@ -101,40 +108,30 @@ Type 'help' to see all available CLI commands.`,
 
   // Live log generator stream
   useEffect(() => {
-    const sampleLogTemplates: Array<{ level: LogEntry["level"]; module: string; msg: string }> = [
-      { level: "INFO", module: "KERNEL", msg: "Ring-0 eBPF probe hooked sys_enter_connect syscall." },
-      { level: "INFO", module: "FIREWALL", msg: "Inbound TLS 1.3 packet on port 443 verified and forwarded." },
-      { level: "WARN", module: "HONEYPOT", msg: "Suspicious port knock detected on 8080 from 194.26.29.112." },
-      { level: "INFO", module: "GEMINI-AI", msg: "Dynamic threat context synchronized with Google Gemini model." },
-      { level: "INFO", module: "ZERO-TRUST", msg: "Strict Mutual TLS cryptographic token validated." },
-      { level: "CRITICAL", module: "SANDBOX", msg: "High-entropy binary execution attempt intercepted & contained." },
-      { level: "DEBUG", module: "MEMORY", msg: "ASLR/DEP heap validation routine completed with 0 violations." },
-    ];
+    const fetchLogs = async () => {
+      try {
+        const res = await fetch("/api/db/timeline");
+        if (res.ok) {
+          const data = await res.json();
+          const mappedLogs: LogEntry[] = data.map((item: any) => ({
+            id: item.id,
+            time: item.time || new Date(item.createdAt).toLocaleTimeString(),
+            level: item.type === "critical" ? "CRITICAL" : item.type === "warning" ? "WARN" : "INFO",
+            module: item.title?.toUpperCase().substring(0, 10) || "SYSTEM",
+            message: item.description,
+          }));
+          setLogs(mappedLogs.slice(0, 50));
+        }
+      } catch (e) {
+        console.error("Failed to fetch timeline logs", e);
+      }
+    };
 
-    // Seed initial logs
-    const initialLogs: LogEntry[] = sampleLogTemplates.map((item, idx) => ({
-      id: `log-${Date.now()}-${idx}`,
-      time: new Date(Date.now() - (7 - idx) * 4000).toLocaleTimeString(),
-      level: item.level,
-      module: item.module,
-      message: item.msg,
-    }));
-    setLogs(initialLogs);
-
+    fetchLogs();
+    
     if (!isLogStreaming) return;
-
-    const logInterval = setInterval(() => {
-      const randomItem = sampleLogTemplates[Math.floor(Math.random() * sampleLogTemplates.length)];
-      const newEntry: LogEntry = {
-        id: `log-${Date.now()}`,
-        time: new Date().toLocaleTimeString(),
-        level: randomItem.level,
-        module: randomItem.module,
-        message: randomItem.msg,
-      };
-      setLogs((prev) => [newEntry, ...prev.slice(0, 49)]);
-    }, 2500);
-
+    
+    const logInterval = setInterval(fetchLogs, 2500);
     return () => clearInterval(logInterval);
   }, [isLogStreaming]);
 

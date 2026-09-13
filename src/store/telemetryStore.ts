@@ -28,30 +28,34 @@ export interface ThreatIncident {
   aiSummary: string;
 }
 
+export type TelemetryStatus = "LIVE" | "STALE" | "OFFLINE" | "UNAVAILABLE";
+
 interface TelemetryState {
-  threatsNeutralized: number;
-  kernelOps: number;
-  kernelLatency: string;
-  quarantinedPayloads: number;
-  aiRemediationRate: number;
-  securityScore: number;
+  telemetryStatus: TelemetryStatus;
+  
+  threatsNeutralized: number | null;
+  kernelOps: number | null;
+  kernelLatency: string | null;
+  quarantinedPayloads: number | null;
+  aiRemediationRate: number | null;
+  securityScore: number | "UNKNOWN";
 
   // New system stats
-  cpuLoad: number;
-  cpuModel: string;
-  cpuCores: number;
-  cpuSpeed: number;
-  memUsedGb: number;
-  memTotalGb: number;
-  memUsagePercent: number;
-  diskUsedGb: number;
-  diskTotalGb: number;
-  diskUsagePercent: number;
-  rxMbps: number;
-  txMbps: number;
+  cpuLoad: number | null;
+  cpuModel: string | null;
+  cpuCores: number | null;
+  cpuSpeed: number | null;
+  memUsedGb: number | null;
+  memTotalGb: number | null;
+  memUsagePercent: number | null;
+  diskUsedGb: number | null;
+  diskTotalGb: number | null;
+  diskUsagePercent: number | null;
+  rxMbps: number | null;
+  txMbps: number | null;
 
   // Phase 2 Advanced Telemetry
-  osBuild: string;
+  osBuild: string | null;
   processes: any[];
   networkConnections: any[];
   services: any[];
@@ -60,7 +64,7 @@ interface TelemetryState {
   fleet: any[];
 
   // History for CPU graph
-  cpuHistory: number[];
+  cpuHistory: (number | null)[];
   
   monthDataThreats: BarData[];
   monthDataQuarantine: BarData[];
@@ -79,25 +83,26 @@ interface TelemetryState {
 }
 
 export const useTelemetryStore = create<TelemetryState>((set, get) => ({
-  threatsNeutralized: 0,
-  kernelOps: 0,
-  kernelLatency: "N/A",
-  quarantinedPayloads: 0,
-  aiRemediationRate: 100, // if no incidents, 100% remediated
-  securityScore: 100,
+  telemetryStatus: "UNAVAILABLE",
+  threatsNeutralized: null,
+  kernelOps: null,
+  kernelLatency: null,
+  quarantinedPayloads: null,
+  aiRemediationRate: null, // if no incidents, 100% remediated
+  securityScore: "UNKNOWN",
 
-  cpuLoad: 0,
-  cpuModel: "Intel Xeon E5-2699 v4",
-  cpuCores: 22,
-  cpuSpeed: 2.2,
-  memUsedGb: 0,
-  memTotalGb: 32,
-  memUsagePercent: 0,
-  diskUsedGb: 0,
-  diskTotalGb: 1024,
-  diskUsagePercent: 0,
-  rxMbps: 0,
-  txMbps: 0,
+  cpuLoad: null,
+  cpuModel: null,
+  cpuCores: null,
+  cpuSpeed: null,
+  memUsedGb: null,
+  memTotalGb: null,
+  memUsagePercent: null,
+  diskUsedGb: null,
+  diskTotalGb: null,
+  diskUsagePercent: null,
+  rxMbps: null,
+  txMbps: null,
   
   osBuild: "Windows 11 (Unknown)",
   processes: [],
@@ -123,34 +128,66 @@ export const useTelemetryStore = create<TelemetryState>((set, get) => ({
       const res = await fetch('/api/telemetry');
       if (!res.ok) return;
       const data = await res.json();
+
+      if (data.telemetryStatus === "UNAVAILABLE") {
+        set((state) => ({
+          telemetryStatus: "UNAVAILABLE",
+          securityScore: "UNKNOWN",
+          kernelOps: null,
+          ebpfAvailable: false,
+          ebpfReason: "Waiting for agent...",
+          kernelLatency: null,
+          cpuLoad: null,
+          cpuModel: null,
+          cpuCores: null,
+          cpuSpeed: null,
+          memUsedGb: null,
+          memTotalGb: null,
+          memUsagePercent: null,
+          diskUsedGb: null,
+          diskTotalGb: null,
+          diskUsagePercent: null,
+          rxMbps: null,
+          txMbps: null,
+          cpuHistory: [...state.cpuHistory.slice(1), null],
+          osBuild: null,
+          processes: [],
+          networkConnections: [],
+          services: [],
+          fleet: []
+        }));
+        return;
+      }
       
       set((state) => ({
-        kernelOps: data.ebpf?.opsPerSec || 0,
+        telemetryStatus: "LIVE",
+        securityScore: 100, // Or derive from actual threat analysis
+        kernelOps: data.ebpf?.opsPerSec ?? null,
         ebpfAvailable: data.ebpf?.available || false,
         ebpfReason: data.ebpf?.available ? "Ring-0 hooks active" : "Windows provider not installed",
-        kernelLatency: data.ebpf?.available ? "0.12ms" : "N/A",
+        kernelLatency: data.ebpf?.available ? "0.12ms" : null,
 
-        cpuLoad: data.cpu?.loadPercent || 0,
-        cpuModel: data.cpu?.model || "Intel CPU",
-        cpuCores: data.cpu?.cores || 8,
-        cpuSpeed: data.cpu?.speedGhz || 3.0,
-        memUsedGb: data.memory?.usedGb || 0,
-        memTotalGb: data.memory?.totalGb || 32,
-        memUsagePercent: data.memory?.usagePercent || 0,
-        diskUsedGb: data.disk?.usedGb || 0,
-        diskTotalGb: data.disk?.totalGb || 1024,
-        diskUsagePercent: data.disk?.usagePercent || 0,
-        rxMbps: data.network?.rxMbps || 0,
-        txMbps: data.network?.txMbps || 0,
+        cpuLoad: data.cpu?.loadPercent ?? null,
+        cpuModel: data.cpu?.model ?? null,
+        cpuCores: data.cpu?.cores ?? null,
+        cpuSpeed: data.cpu?.speedGhz ?? null,
+        memUsedGb: data.memory?.usedGb ?? null,
+        memTotalGb: data.memory?.totalGb ?? null,
+        memUsagePercent: data.memory?.usagePercent ?? null,
+        diskUsedGb: data.disk?.usedGb ?? null,
+        diskTotalGb: data.disk?.totalGb ?? null,
+        diskUsagePercent: data.disk?.usagePercent ?? null,
+        rxMbps: data.network?.rxMbps ?? null,
+        txMbps: data.network?.txMbps ?? null,
 
-        cpuHistory: [...state.cpuHistory.slice(1), data.cpu?.loadPercent || 0],
+        cpuHistory: [...state.cpuHistory.slice(1), data.cpu?.loadPercent ?? null],
 
-        osBuild: data.host?.osBuild || state.osBuild,
-        processes: data.advanced?.processes || state.processes,
-        networkConnections: data.advanced?.networkConnections || state.networkConnections,
-        services: data.advanced?.services || state.services,
+        osBuild: data.host?.osBuild ?? null,
+        processes: data.advanced?.processes || [],
+        networkConnections: data.advanced?.networkConnections || [],
+        services: data.advanced?.services || [],
         
-        fleet: data.fleet || state.fleet
+        fleet: data.fleet || []
       }));
     } catch (error) {
       console.error("Failed to fetch system stats", error);
@@ -185,7 +222,7 @@ export const useTelemetryStore = create<TelemetryState>((set, get) => ({
       score -= (highCount * 5);
       
       // Deduct for extreme hardware load (suggests crypto mining or unmitigated attack)
-      const currentCpu = get().cpuLoad;
+      const currentCpu = get().cpuLoad ?? 0;
       if (currentCpu > 95) score -= 15;
       else if (currentCpu > 85) score -= 5;
       

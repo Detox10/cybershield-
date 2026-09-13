@@ -58,7 +58,7 @@ export const PhysicalReportModal: React.FC<PhysicalReportModalProps> = ({
           criticalThreatsCount: files.filter((f: any) => f.severity === "CRITICAL" || f.isMalicious).length,
           activeFirewallRulesCount: 6,
           riskScore: files.some((f: any) => f.isMalicious) ? 84 : 12,
-          digitalSignature: "0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join(""),
+          digitalSignature: "Signature Unavailable",
           scannedFiles: files,
         };
         setReport(generatedReport);

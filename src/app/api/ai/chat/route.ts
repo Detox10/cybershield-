@@ -31,14 +31,14 @@ export async function POST(req: NextRequest) {
 
     const geminiKey = apiKey || process.env.GEMINI_API_KEY;
 
+    // Proceed to fallback if key is missing
     if (!geminiKey || geminiKey.trim().length < 10) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Gemini API key is required. Add it in Settings.",
-        },
-        { status: 401 }
-      );
+      return NextResponse.json({
+        success: true,
+        text: `**⚠️ AI Service Temporarily Unavailable (API Key Missing)**\n\nGemini API could not be reached.\n\n**Offline Guidance:**\nFor threat analysis, check the Threat Radar and Forensics panels. Use the Malware Scanner to compute SHA-256 and Shannon entropy for suspicious files. Refer to MITRE ATT&CK at attack.mitre.org for technique details.\n\n*Verify your Gemini API key in Settings and ensure you have internet connectivity.*`,
+        model: "LOCAL HEURISTIC ANALYSIS",
+        confidence: 0,
+      });
     }
 
     // Build conversation contents for Gemini
@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
             success: true,
             text,
             model,
-            confidence: Math.floor(Math.random() * 8) + 92, // 92-99
+            confidence: undefined,
           });
         } else {
           const errData = await geminiRes.json().catch(() => ({}));

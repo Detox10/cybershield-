@@ -94,7 +94,7 @@ export const GRADIENT_THEMES: Record<
 };
 
 export class ThemeManager {
-  private static STORAGE_KEY = "cybershield_theme_config";
+  private static readonly STORAGE_KEY = "cybershield_theme_config";
 
   static getTheme(): ThemeConfig {
     if (typeof window === "undefined") return DEFAULT_THEME;

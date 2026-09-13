@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { simpleParser, ParsedMail } from 'mailparser';
 import { prisma } from '@/lib/prisma';
 import crypto from 'crypto';
+import { EmailRulesEngine } from '@/lib/emailRulesEngine';
 
 export async function POST(req: NextRequest) {
   try {
@@ -100,19 +101,19 @@ export async function POST(req: NextRequest) {
     }));
 
     // 4. Calculate Risk Score (basic MVP heuristic + VT intel)
-    let riskScore = 0;
-    if (observedSpf === 'FAIL') riskScore += 20;
-    if (observedDkim === 'FAIL') riskScore += 20;
-    if (observedDmarc === 'FAIL') riskScore += 20;
-    if (attachments.length > 0) riskScore += 10;
-    if (urls.length > 3) riskScore += 10;
-
     const hasMaliciousAttachment = attachments.some(a => a.riskLevel === 'HIGH');
-    if (hasMaliciousAttachment) riskScore += 50;
-
-    let riskLevel = 'LOW';
-    if (riskScore > 30 && riskScore <= 60) riskLevel = 'MEDIUM';
-    if (riskScore > 60) riskLevel = 'HIGH';
+    
+    const evaluation = EmailRulesEngine.evaluate({
+      observedSpf,
+      observedDkim,
+      observedDmarc,
+      attachmentCount: attachments.length,
+      urlCount: urls.length,
+      hasMaliciousAttachment
+    });
+    
+    const riskScore = evaluation.riskScore;
+    const riskLevel = evaluation.riskLevel;
 
     // 5. Create Incident and Email Analysis in DB
     const newIncident = await prisma.incident.create({

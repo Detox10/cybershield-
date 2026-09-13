@@ -14,8 +14,8 @@ export const GlowingBarChart: React.FC = () => {
   // Transform cpuHistory into bar format
   const activeData = cpuHistory.map((val, idx) => ({
     time: `T-${30 - idx}s`,
-    value: val,
-    isPeak: val > 80
+    value: val ?? 0,
+    isPeak: (val ?? 0) > 80
   }));
   
   const maxHeight = 165; // in px

@@ -38,3 +38,4 @@ next-env.d.ts
 # database files
 *.db
 cybershield_data.json
+authToken.json

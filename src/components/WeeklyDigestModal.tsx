@@ -6,20 +6,17 @@ import {
   X,
   TrendingUp,
   ShieldCheck,
-  Zap,
   Award,
-  Share2,
   Twitter,
   Linkedin,
   ArrowRight,
-  Sparkles,
   CheckCircle2,
 } from "lucide-react";
 import ShieldCore from "./ShieldCore";
 
 interface WeeklyDigestModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+  readonly isOpen: boolean;
+  readonly onClose: () => void;
 }
 
 export default function WeeklyDigestModal({ isOpen, onClose }: WeeklyDigestModalProps) {
@@ -149,14 +146,14 @@ export default function WeeklyDigestModal({ isOpen, onClose }: WeeklyDigestModal
           <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 dark:border-white/10">
             <div className="flex items-center space-x-2">
               <button
-                onClick={() => window.open("https://twitter.com", "_blank")}
+                onClick={() => window.open("https://twitter.com", "_blank", "noopener,noreferrer")}
                 className="p-2 rounded-btn bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/15 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-all flex items-center gap-1.5"
               >
                 <Twitter className="w-3.5 h-3.5 fill-current" />
                 <span>Share</span>
               </button>
               <button
-                onClick={() => window.open("https://linkedin.com", "_blank")}
+                onClick={() => window.open("https://linkedin.com", "_blank", "noopener,noreferrer")}
                 className="p-2 rounded-btn bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/15 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-all flex items-center gap-1.5"
               >
                 <Linkedin className="w-3.5 h-3.5 fill-current" />

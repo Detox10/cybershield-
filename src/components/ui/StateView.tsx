@@ -9,7 +9,6 @@ import {
   CheckCircle2,
   RefreshCw,
   ArrowRight,
-  ShieldAlert,
 } from "lucide-react";
 import { Button } from "./Button";
 import { Skeleton } from "./Skeleton";
@@ -85,8 +84,8 @@ export const StateView: React.FC<StateViewProps> = ({
               <Skeleton className="h-5 w-32 rounded-md" />
               <Skeleton className="h-5 w-20 rounded-md" />
             </div>
-            {Array.from({ length: skeletonRows }).map((_, i) => (
-              <div key={i} className="flex items-center justify-between py-2">
+            {Array.from({ length: skeletonRows }).map((_, index) => (
+              <div key={`msg-${index}`} className="flex items-start gap-3 text-left py-2">
                 <div className="flex items-center gap-3">
                   <Skeleton className="h-8 w-8 rounded-lg" />
                   <div className="space-y-1">

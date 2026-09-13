@@ -102,33 +102,41 @@ git clone https://github.com/Detox10/cybershield.git
 cd cybershield
 ```
 
-### 2️⃣ Install Dashboard Dependencies
+### 2️⃣ Install Dependencies & Setup Database
 
 ```bash
 npm install
+# Ensure PostgreSQL is running (e.g. via docker-compose)
+npx prisma db push
 ```
 
-### 3️⃣ Start the Dashboard (Development)
+### 3️⃣ Start the WSS Gateway & Dashboard
 
 ```bash
+# Terminal 1: Start the Next.js Dashboard
 npm run dev
-# 🚀 Dashboard running on http://localhost:3000
+
+# Terminal 2: Start the WSS Gateway
+npm run gateway
+# 🚀 Gateway running on ws://localhost:3001
 ```
 
-### 4️⃣ Start the Endpoint Agent
+### 4️⃣ Endpoint Agent Workflow (Connect ➔ Download ➔ Install ➔ Enroll)
 
 ```bash
-# Open a NEW terminal tab — run as Administrator for real hardware stats!
+# 1. Connect Device in the Dashboard to get an Enrollment Token
+# 2. Compile the agent
+npm run build:agent
+# 3. Enroll your agent (Run as Administrator)
 cd agent
-npm install
-node index.js
+node index.js --enroll YOUR_TOKEN_HERE
 
 # ✅ You should see:
 # =========================================
 #  CYBERSHIELD ENDPOINT AGENT [Windows]
-#  Phase 3: Active Threat Scanner Online
+#  WSS Secure Connection Established
 # =========================================
-# [+] Telemetry Sent | CPU: 23% | Procs: 357 | NetConns: 48
+# [+] Telemetry Stream Active via WebSockets
 ```
 
 ---
@@ -229,16 +237,15 @@ cybershield/
   [Windows OS]                [Agent - index.js]             [Dashboard]
       │                              │                             │
       │  os.cpus()  ─────────────►  │                             │
-      │  si.mem() ───────────────►  │   POST /api/telemetry       │
+      │  si.mem() ───────────────►  │      WSS Connection         │
       │  si.networkStats() ──────►  │  ──────────────────────►   │
       │  si.fsSize() ────────────►  │                             │
-      │  si.processes() ─────────►  │    every 1.5 seconds        │
+      │  si.processes() ─────────►  │    Every 1.5 Seconds        │
       │                              │                             │
-      │                              │   ◄── HTTP 200 OK ─────────│
+      │                              │   ◄── WSS Commands ────────│
       │                              │                             │
-      │                              │              React re-renders
-      │                              │           Fleet Table updates
-      │                              │           Graph new data point
+      │                              │      Redis Stream Cache
+      │                              │      React UI Subscription
 ```
 
 ---

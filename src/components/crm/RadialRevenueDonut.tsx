@@ -138,11 +138,13 @@ export const RadialRevenueDonut: React.FC = () => {
         {/* Center Text Value */}
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
           <div className="text-2xl font-black text-white tracking-tight">
-            {securityScore}%
+            {securityScore === "UNKNOWN" ? "—" : `${securityScore}%`}
           </div>
-          <div className="text-[10px] font-mono text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-1 mt-0.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span>{securityScore >= 95 ? "SHIELD SECURE" : "AT RISK"}</span>
+          <div className="text-[10px] font-mono text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1 mt-0.5">
+            <span className={`w-1.5 h-1.5 rounded-full ${securityScore === "UNKNOWN" ? "bg-slate-500" : "bg-emerald-400 animate-pulse"}`} />
+            <span>
+              {securityScore === "UNKNOWN" ? "NO SIGNAL" : (securityScore >= 95 ? "SHIELD SECURE" : "AT RISK")}
+            </span>
           </div>
         </div>
       </div>
@@ -150,7 +152,7 @@ export const RadialRevenueDonut: React.FC = () => {
       {/* Bottom Summary Pill */}
       <div className="text-center pt-2 border-t border-white/[0.04]">
         <span className="text-xs font-mono text-slate-400">
-          32,064 Attacks Mitigated • 0 Active Leaks <span className="text-[10px] ml-1">· SIMULATED</span>
+          Waiting for threat analysis streams
         </span>
       </div>
     </div>

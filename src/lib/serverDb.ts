@@ -1,8 +1,6 @@
-import fs from 'fs';
-import path from 'path';
+import { PrismaClient } from '@prisma/client';
 
-// Using process.cwd() ensures it works in Next.js backend
-const DATA_FILE = path.join(process.cwd(), 'cybershield_data.json');
+const prisma = new PrismaClient();
 
 export interface ScannedFileRecord {
   id: string;
@@ -14,7 +12,7 @@ export interface ScannedFileRecord {
   sha1?: string;
   entropy: number;
   isMalicious: boolean;
-  severity: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" | "CLEAN";
+  severity: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" | "CLEAN" | string;
   positives: number;
   totalEngines: number;
   verdict: string;
@@ -23,6 +21,8 @@ export interface ScannedFileRecord {
   timestamp: string;
   quarantined: boolean;
   engineResults?: Record<string, { category: string; result: string }>;
+  originalPath?: string;
+  quarantineDate?: string;
 }
 
 export interface PhysicalForensicReport {
@@ -47,7 +47,7 @@ export interface UserAccount {
   id: string;
   email: string;
   name: string;
-  role: "SENTINEL_ROOT_ADMIN" | "SECURITY_ANALYST" | "AUDITOR";
+  role: "SENTINEL_ROOT_ADMIN" | "SECURITY_ANALYST" | "AUDITOR" | string;
   avatar: string;
   createdAt: string;
   lastLogin: string;
@@ -58,7 +58,7 @@ export interface TimelineEvent {
   time: string;
   title: string;
   description: string;
-  type: "critical" | "warning" | "info" | "success";
+  type: "critical" | "warning" | "info" | "success" | string;
 }
 
 export interface ThreatIncident {
@@ -67,144 +67,243 @@ export interface ThreatIncident {
   cveTtp: string;
   targetHost: string;
   vector: string;
-  severity: "CRITICAL" | "HIGH" | "ELEVATED" | "MITIGATED";
+  severity: "CRITICAL" | "HIGH" | "ELEVATED" | "MITIGATED" | string;
   timestamp: string;
-  status: "QUARANTINED" | "BLOCKED" | "SANDBOXED" | "ANALYZING";
+  status: "QUARANTINED" | "BLOCKED" | "SANDBOXED" | "ANALYZING" | string;
   aiSummary: string;
 }
 
-interface DBState {
-  scans: ScannedFileRecord[];
-  reports: PhysicalForensicReport[];
-  users: UserAccount[];
-  timeline: TimelineEvent[];
-  incidents: ThreatIncident[];
-}
-
-const DEFAULT_STATE: DBState = {
-  scans: [],
-  reports: [],
-  users: [],
-  timeline: [],
-  incidents: []
-};
-
-// Singleton database class
+// Singleton database class (now Prisma backed)
 export class ServerDB {
-  private static readDB(): DBState {
-    try {
-      if (!fs.existsSync(DATA_FILE)) {
-        fs.writeFileSync(DATA_FILE, JSON.stringify(DEFAULT_STATE, null, 2));
-        return DEFAULT_STATE;
-      }
-      const data = fs.readFileSync(DATA_FILE, 'utf-8');
-      return JSON.parse(data);
-    } catch (err) {
-      console.error("Failed to read database, returning default state", err);
-      return DEFAULT_STATE;
-    }
-  }
-
-  private static writeDB(data: DBState) {
-    try {
-      fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
-    } catch (err) {
-      console.error("Failed to write to database", err);
-    }
-  }
-
+  
   // --- Scans ---
-  static getScans() {
-    return this.readDB().scans;
+  static async getScans(): Promise<ScannedFileRecord[]> {
+    const records = await prisma.scannedFileRecord.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+    return records.map(r => ({
+      ...r,
+      md5: r.md5 || undefined,
+      sha1: r.sha1 || undefined,
+      familyName: r.familyName || undefined,
+      mitreTtp: r.mitreTtp || undefined,
+      engineResults: r.engineResults ? JSON.parse(r.engineResults) : undefined,
+      originalPath: r.originalPath || undefined,
+      quarantineDate: r.quarantineDate || undefined,
+    }));
   }
 
-  static addScan(scan: ScannedFileRecord) {
-    const db = this.readDB();
-    // Prepend, prevent duplicate hash
-    db.scans = [scan, ...db.scans.filter(s => s.sha256 !== scan.sha256)];
-    this.writeDB(db);
+  static async addScan(scan: ScannedFileRecord): Promise<void> {
+    await prisma.scannedFileRecord.upsert({
+      where: { id: scan.id },
+      update: {},
+      create: {
+        id: scan.id,
+        name: scan.name,
+        size: scan.size,
+        type: scan.type,
+        sha256: scan.sha256,
+        md5: scan.md5 || null,
+        sha1: scan.sha1 || null,
+        entropy: scan.entropy,
+        isMalicious: scan.isMalicious,
+        severity: scan.severity,
+        positives: scan.positives,
+        totalEngines: scan.totalEngines,
+        verdict: scan.verdict,
+        familyName: scan.familyName || null,
+        mitreTtp: scan.mitreTtp || null,
+        timestamp: scan.timestamp,
+        quarantined: scan.quarantined,
+        engineResults: scan.engineResults ? JSON.stringify(scan.engineResults) : null,
+        originalPath: scan.originalPath || null,
+        quarantineDate: scan.quarantineDate || null,
+      }
+    });
   }
 
-  static quarantineFile(sha256: string) {
-    const db = this.readDB();
-    let updated = false;
-    db.scans = db.scans.map(s => {
-      if (s.sha256 === sha256) {
-        updated = true;
-        return { ...s, quarantined: true };
-      }
-      return s;
-    });
-    
-    // Also update incidents related to this hash
-    db.incidents = db.incidents.map(inc => {
-      // Very basic linking - if incident mentions hash
-      if (inc.aiSummary.includes(sha256)) {
-        return { ...inc, status: "QUARANTINED" };
-      }
-      return inc;
-    });
-    
-    if (updated) {
-       // add timeline event
-       const evt: TimelineEvent = {
-           id: `evt-${Date.now()}`,
-           time: new Date().toLocaleTimeString(),
-           title: "File Quarantined",
-           description: `Artifact ${sha256.substring(0,8)}... moved to secure vault.`,
-           type: "success"
-       };
-       db.timeline = [evt, ...db.timeline].slice(0, 100);
+  static async quarantineFile(sha256: string): Promise<void> {
+    // 1. Update the scan
+    const scans = await prisma.scannedFileRecord.findMany({ where: { sha256 } });
+    for (const scan of scans) {
+      await prisma.scannedFileRecord.update({
+        where: { id: scan.id },
+        data: { quarantined: true, quarantineDate: new Date().toISOString() }
+      });
     }
 
-    this.writeDB(db);
+    // 2. Update incidents mentioning the hash
+    const incidents = await prisma.incident.findMany({
+      where: { aiSummary: { contains: sha256 } }
+    });
+    for (const inc of incidents) {
+      await prisma.incident.update({
+        where: { id: inc.id },
+        data: { status: "QUARANTINED" }
+      });
+    }
+
+    // 3. Add CyberEvent if we updated a scan
+    if (scans.length > 0) {
+      await prisma.cyberEvent.create({
+        data: {
+          eventId: `evt-${Date.now()}`,
+          deviceId: 'system', // or the relevant agent ID if we tracked it
+          type: "QUARANTINE_EXECUTED",
+          severity: "HIGH",
+          source: "Sentinel Dashboard",
+          evidence: JSON.stringify({
+             title: "File Quarantined",
+             description: `Artifact ${sha256.substring(0,8)}... moved to secure vault.`
+          }),
+          status: "RESOLVED"
+        }
+      });
+    }
   }
 
   // --- Reports ---
-  static getReports() {
-    return this.readDB().reports;
+  static async getReports(): Promise<PhysicalForensicReport[]> {
+    const records = await prisma.physicalForensicReport.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+    return records.map(r => ({
+      reportId: r.reportId,
+      generatedAt: r.generatedAt,
+      operator: r.operator,
+      deviceHostname: r.deviceHostname,
+      osRelease: r.osRelease,
+      cpuModel: r.cpuModel,
+      gpuModel: r.gpuModel,
+      ramUsage: r.ramUsage,
+      primaryIp: r.primaryIp,
+      scannedFilesCount: r.scannedFilesCount,
+      criticalThreatsCount: r.criticalThreatsCount,
+      activeFirewallRulesCount: r.activeFirewallRulesCount,
+      riskScore: r.riskScore,
+      digitalSignature: r.digitalSignature,
+      scannedFiles: JSON.parse(r.scannedFiles)
+    }));
   }
 
-  static addReport(report: PhysicalForensicReport) {
-    const db = this.readDB();
-    db.reports = [report, ...db.reports];
-    this.writeDB(db);
+  static async addReport(report: PhysicalForensicReport): Promise<void> {
+    await prisma.physicalForensicReport.create({
+      data: {
+        reportId: report.reportId,
+        generatedAt: report.generatedAt,
+        operator: report.operator,
+        deviceHostname: report.deviceHostname,
+        osRelease: report.osRelease,
+        cpuModel: report.cpuModel,
+        gpuModel: report.gpuModel,
+        ramUsage: report.ramUsage,
+        primaryIp: report.primaryIp,
+        scannedFilesCount: report.scannedFilesCount,
+        criticalThreatsCount: report.criticalThreatsCount,
+        activeFirewallRulesCount: report.activeFirewallRulesCount,
+        riskScore: report.riskScore,
+        digitalSignature: report.digitalSignature,
+        scannedFiles: JSON.stringify(report.scannedFiles),
+      }
+    });
   }
 
   // --- Users ---
-  static getUsers() {
-    return this.readDB().users;
+  static async getUsers(): Promise<UserAccount[]> {
+    // Skipping UserAccount DB migration per instructions, return empty or mock if needed.
+    return [];
   }
 
-  static addUser(user: UserAccount) {
-    const db = this.readDB();
-    db.users = [user, ...db.users.filter(u => u.email !== user.email)];
-    this.writeDB(db);
+  static async addUser(user: UserAccount): Promise<void> {
+    // No-op for now.
   }
 
   // --- Incidents & Timeline ---
-  static getTimeline() {
-    return this.readDB().timeline;
+  static async getTimeline(): Promise<TimelineEvent[]> {
+    const events = await prisma.cyberEvent.findMany({
+      orderBy: { timestamp: 'desc' },
+      take: 100
+    });
+    return events.map(e => {
+      let title = e.type;
+      let description = `Severity: ${e.severity} | Source: ${e.source}`;
+      let typeStr = "info";
+      
+      if (e.severity === "CRITICAL" || e.severity === "HIGH") typeStr = "critical";
+      else if (e.severity === "WARNING") typeStr = "warning";
+      
+      if (e.evidence) {
+         try {
+           const ev = JSON.parse(e.evidence);
+           if (ev.title) title = ev.title;
+           if (ev.description) description = ev.description;
+           if (ev.command) description = `Command: ${ev.command}`;
+         } catch(err) { /* ignore */ }
+      }
+      
+      return {
+        id: e.eventId,
+        time: e.timestamp.toLocaleTimeString(),
+        title,
+        description,
+        type: typeStr,
+      };
+    });
   }
 
-  static addTimelineEvent(event: TimelineEvent) {
-    const db = this.readDB();
-    db.timeline = [event, ...db.timeline].slice(0, 100); // keep last 100
-    this.writeDB(db);
+  static async addTimelineEvent(event: TimelineEvent): Promise<void> {
+    await prisma.cyberEvent.create({
+      data: {
+        eventId: event.id || `evt-${Date.now()}`,
+        deviceId: 'system',
+        type: event.title || "SYSTEM_EVENT",
+        severity: event.type === "critical" ? "HIGH" : (event.type === "warning" ? "WARNING" : "INFO"),
+        source: "Legacy API",
+        evidence: JSON.stringify({ description: event.description, title: event.title }),
+        status: "RESOLVED"
+      }
+    });
   }
 
-  static getIncidents() {
-    return this.readDB().incidents;
+  static async getIncidents(): Promise<ThreatIncident[]> {
+    const incidents = await prisma.incident.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 50
+    });
+    return incidents.map(i => ({
+      id: i.id,
+      threatName: i.title,
+      cveTtp: i.cveTtp || "Unknown",
+      targetHost: i.targetHost || "Unknown",
+      vector: i.vector || "Unknown",
+      severity: i.severity,
+      timestamp: i.createdAt.toISOString(),
+      status: i.status,
+      aiSummary: i.aiSummary || ""
+    }));
   }
 
-  static addIncident(incident: ThreatIncident) {
-    const db = this.readDB();
-    db.incidents = [incident, ...db.incidents].slice(0, 50); // keep last 50
-    this.writeDB(db);
+  static async addIncident(incident: ThreatIncident): Promise<void> {
+    await prisma.incident.create({
+      data: {
+        id: incident.id,
+        title: incident.threatName,
+        cveTtp: incident.cveTtp,
+        targetHost: incident.targetHost,
+        vector: incident.vector,
+        severity: incident.severity,
+        status: incident.status,
+        aiSummary: incident.aiSummary,
+      }
+    });
   }
 
   // Utility to clear DB (for "Historical Degradation" verification)
-  static clearDB() {
-    this.writeDB(DEFAULT_STATE);
+  static async clearDB(): Promise<void> {
+    // Danger: Only use in tests/resets.
+    await prisma.scannedFileRecord.deleteMany();
+    await prisma.cyberEvent.deleteMany();
+    await prisma.physicalForensicReport.deleteMany();
+    await prisma.incident.deleteMany();
   }
 }

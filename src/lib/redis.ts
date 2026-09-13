@@ -6,7 +6,7 @@ const globalForRedis = globalThis as unknown as {
 
 // Fallback to in-memory store since Docker/Redis is not installed locally
 class InMemoryRedis {
-  private store = new Map<string, any>();
+  private readonly store = new Map<string, any>();
 
   async set(key: string, value: string, ex?: string, ttl?: number) {
     this.store.set(key, { value, expires: ttl ? Date.now() + ttl * 1000 : null });

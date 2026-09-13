@@ -79,6 +79,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing parameters" }, { status: 400 });
     }
 
+    const targetAgent = await prisma.agent.findUnique({ where: { id: deviceId } });
+    if (!targetAgent) {
+      return NextResponse.json({ error: "Agent not found" }, { status: 404 });
+    }
+
+    // Capability Matrix Enforcement
+    if (action === 'KILL_PROCESS' && !targetAgent.hasAdminPrivileges) {
+      return NextResponse.json({ 
+        error: "Capability Denied: Agent lacks administrative privileges required for destructive OS commands." 
+      }, { status: 403 });
+    }
+
     const commandPayload = {
       commandId: crypto.randomUUID(),
       action,

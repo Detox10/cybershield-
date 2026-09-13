@@ -3,7 +3,7 @@ const axios = require('axios');
 const os = require('os');
 const fs = require('fs');
 const path = require('path');
-const { exec } = require('child_process');
+const { exec, execSync } = require('child_process');
 const crypto = require('crypto');
 
 // Configuration
@@ -16,14 +16,62 @@ const FAST_POLL_MS = 1500;
 const SLOW_POLL_MS = 10000;
 const SECURITY_SCAN_MS = 5000; // Scan processes every 5s
 
-// Load Authentication Token
+// Load Authentication Token dynamically
 let AUTH_TOKEN = '';
-try {
-  const authData = JSON.parse(fs.readFileSync(path.join(__dirname, 'authToken.json'), 'utf-8'));
-  AUTH_TOKEN = `Bearer ${authData.authToken}`;
-} catch (e) {
-  console.error("[!] Error: Could not load authToken.json. Please run 'node enroll.js' first.");
-  process.exit(1);
+const AUTH_FILE_PATH = path.join(__dirname, 'authToken.json');
+
+function checkAdmin() {
+  try {
+    if (os.platform() === 'win32') {
+      execSync('net session', { stdio: 'ignore' });
+      return true;
+    } else {
+      return process.getuid && process.getuid() === 0;
+    }
+  } catch (e) {
+    return false;
+  }
+}
+
+async function loadOrEnrollIdentity() {
+  try {
+    if (fs.existsSync(AUTH_FILE_PATH)) {
+      const authData = JSON.parse(fs.readFileSync(AUTH_FILE_PATH, 'utf-8'));
+      AUTH_TOKEN = `Bearer ${authData.authToken}`;
+      return;
+    }
+  } catch (e) {
+    // Fallthrough to enroll
+  }
+
+  console.log("[*] No identity found. Initiating dynamic cryptographic enrollment...");
+  try {
+    const osInfo = await si.osInfo();
+    const hostname = os.hostname();
+    const osBuild = `${osInfo.distro} ${osInfo.release} (${osInfo.build})`;
+    const hasAdminPrivileges = checkAdmin();
+
+    const response = await axios.post(`${BASE_URL}/api/agent/enroll`, {
+      hostname,
+      osBuild,
+      setupToken: 'CYBERSHIELD_SETUP_2026', // Temporary setup token
+      hasAdminPrivileges
+    });
+
+    if (response.data.success) {
+      const { deviceId, deviceSecret } = response.data;
+      const authToken = `${deviceId}:${deviceSecret}`;
+      fs.writeFileSync(AUTH_FILE_PATH, JSON.stringify({ authToken, deviceId }), { encoding: 'utf-8', mode: 0o600 });
+      AUTH_TOKEN = `Bearer ${authToken}`;
+      console.log(`[+] Identity established securely. Device ID: ${deviceId}`);
+    } else {
+      console.error("[-] Dynamic enrollment rejected by server.");
+      process.exit(1);
+    }
+  } catch (error) {
+    console.error("[-] Dynamic enrollment failed. Ensure API is reachable.");
+    process.exit(1);
+  }
 }
 
 console.log("=========================================");
@@ -103,25 +151,86 @@ async function collectSlowTelemetry() {
   }
 }
 
+const scannedPaths = new Set();
+const SUSPICIOUS_ENTROPY_THRESHOLD = 7.4;
+
+function analyzeFileAsync(filePath) {
+  return new Promise((resolve) => {
+    if (!filePath) return resolve(null);
+    try {
+      if (!fs.existsSync(filePath)) return resolve(null);
+      const stat = fs.statSync(filePath);
+      // Skip files larger than 100MB to save CPU
+      if (stat.size > 100 * 1024 * 1024) return resolve(null);
+
+      const hash = crypto.createHash('sha256');
+      let byteCounts = new Array(256).fill(0);
+      let totalBytes = 0;
+
+      const stream = fs.createReadStream(filePath, { highWaterMark: 1024 * 1024 });
+      
+      stream.on('data', (chunk) => {
+        hash.update(chunk);
+        for (let i = 0; i < chunk.length; i++) {
+          byteCounts[chunk[i]]++;
+        }
+        totalBytes += chunk.length;
+      });
+
+      stream.on('end', () => {
+        let entropy = 0;
+        if (totalBytes > 0) {
+          for (let i = 0; i < 256; i++) {
+            if (byteCounts[i] > 0) {
+              const p = byteCounts[i] / totalBytes;
+              entropy -= p * Math.log2(p);
+            }
+          }
+        }
+        resolve({ hash: hash.digest('hex'), entropy });
+      });
+
+      stream.on('error', () => resolve(null));
+    } catch (e) {
+      resolve(null);
+    }
+  });
+}
+
 // Security Loop: Scan active processes for heuristics
 async function runSecurityScan() {
   try {
     const processData = await si.processes();
     const procs = processData.list || [];
 
-    // Simple IoC blacklist for demonstration
-    const maliciousNames = ["dummy-malware", "wannacry.exe", "mimikatz.exe", "test-malware.exe"];
-
     for (const p of procs) {
+      const pPath = p.path;
+      if (!pPath || scannedPaths.has(pPath.toLowerCase())) continue;
+
+      scannedPaths.add(pPath.toLowerCase());
+
+      const analysis = await analyzeFileAsync(pPath);
+      if (!analysis) continue;
+
+      const { hash, entropy } = analysis;
+
+      // Heuristic: Flag if entropy is unusually high (packed/encrypted)
+      let isSuspicious = false;
+      let reason = "";
+
+      if (entropy > SUSPICIOUS_ENTROPY_THRESHOLD) {
+        isSuspicious = true;
+        reason = `High Entropy Packed Executable (${entropy.toFixed(2)}/8.0)`;
+      }
+
+      // Also flag if it's explicitly named for testing (fallback)
       const pName = (p.name || "").toLowerCase();
-      const pCmd = (p.command || "").toLowerCase();
-      
-      const isMalicious = maliciousNames.some(badName => pName.includes(badName) || pCmd.includes(badName));
+      if (pName.includes("dummy-malware") || pName.includes("test-malware.exe") || pName.includes("wannacry.exe")) {
+        isSuspicious = true;
+        reason = "Known suspicious process name (Heuristic Override)";
+      }
 
-      if (isMalicious) {
-        // Compute an actual hash of the process name (simulating a memory signature hash)
-        const hash = crypto.createHash('sha256').update(pName + pCmd).digest('hex');
-
+      if (isSuspicious) {
         const threatPayload = {
           threatName: "Suspicious Node Execution",
           cveTtp: "Heuristic (T1059.003 - Command and Scripting Interpreter)",
@@ -136,7 +245,9 @@ async function runSecurityScan() {
         };
 
         console.log(`\n[!!!] THREAT DETECTED: ${p.name} (PID: ${p.pid})`);
-        console.log(`[*] Computed Memory Signature Hash: ${hash}`);
+        console.log(`[*] Computed Real Memory/Disk Signature Hash: ${hash}`);
+        console.log(`[*] Measured Shannon Entropy: ${entropy.toFixed(3)}/8.0`);
+        console.log(`[*] Reason: ${reason}`);
         console.log(`[*] Sending Security Event to Cloud for AI Analysis...`);
 
         try {
@@ -147,12 +258,10 @@ async function runSecurityScan() {
         } catch(e) {
           console.error(`[!] Failed to emit security event: ${e.message}`);
         }
-
-        break; 
       }
     }
   } catch(error) {
-    // Ignore scan errors
+    console.error("[!] Scan Error:", error.message);
   }
 }
 
@@ -166,6 +275,41 @@ for (const core of initialCpus) {
     prevCpuTotal += core.times[type];
   }
   prevCpuIdle += core.times.idle;
+}
+
+// WebSocket State
+const WebSocket = require('ws');
+let wsClient = null;
+const WS_URL = 'ws://localhost:3001';
+
+function connectWebSocket() {
+  const tokenStr = AUTH_TOKEN.replace('Bearer ', '');
+  wsClient = new WebSocket(`${WS_URL}?token=${tokenStr}`);
+
+  wsClient.on('open', () => {
+    console.log(`\n[+] Connected to WSS Gateway (Real-Time Mode Active)`);
+  });
+
+  wsClient.on('message', (data) => {
+    try {
+      const msg = JSON.parse(data.toString());
+      if (msg.type === 'COMMAND') {
+        handleCommand(msg.data);
+      }
+    } catch(e) {
+      console.error("WS Message Error:", e);
+    }
+  });
+
+  wsClient.on('close', () => {
+    console.log(`\n[-] WSS Disconnected, falling back to HTTP. Retrying in 5s...`);
+    wsClient = null;
+    setTimeout(connectWebSocket, 5000);
+  });
+  
+  wsClient.on('error', (err) => {
+    wsClient = null;
+  });
 }
 
 // Fast Loop: Real-time CPU/RAM every 1.5 seconds
@@ -269,14 +413,19 @@ async function collectFastTelemetry() {
 
     // Push to dashboard
     try {
-      await axios.post(DASHBOARD_URL, payload, {
-        headers: {
-          'Authorization': AUTH_TOKEN,
-          'Content-Type': 'application/json'
-        },
-        timeout: 2000
-      });
-      process.stdout.write(`\r[+] Telemetry Sent | CPU: ${payload.cpu.loadPercent}% | Procs: ${payload.advanced.processes.length} | NetConns: ${payload.advanced.networkConnections.length}`.padEnd(80));
+      if (wsClient && wsClient.readyState === WebSocket.OPEN) {
+        wsClient.send(JSON.stringify({ type: 'TELEMETRY', data: payload }));
+        process.stdout.write(`\r[+] Telemetry Sent via WSS | CPU: ${payload.cpu.loadPercent}% | Procs: ${payload.advanced.processes.length}`.padEnd(80));
+      } else {
+        await axios.post(DASHBOARD_URL, payload, {
+          headers: {
+            'Authorization': AUTH_TOKEN,
+            'Content-Type': 'application/json'
+          },
+          timeout: 10000
+        });
+        process.stdout.write(`\r[+] Telemetry Sent via HTTP | CPU: ${payload.cpu.loadPercent}% | Procs: ${payload.advanced.processes.length}`.padEnd(80));
+      }
     } catch (e) {
       process.stdout.write(`\r[!] Failed to connect to Dashboard (${e.message})`.padEnd(80));
     }
@@ -286,66 +435,134 @@ async function collectFastTelemetry() {
   }
 }
 
+const ALLOWED_EXEC_PREFIXES = [
+  "ping", "ipconfig", "ifconfig", "hostname", "whoami", 
+  "systeminfo", "netstat", "wmic", "ver", "dir", "tasklist", "cat", "uname"
+];
+
+async function handleCommand(command) {
+  if (command && command.action === 'KILL_PROCESS') {
+    console.log(`\n[!] Received Command: KILL_PROCESS | PID: ${command.pid} | TARGET: ${command.processName}`);
+    
+    // Verify process name matches before killing
+    const processData = await si.processes();
+    const targetProc = processData.list.find(p => p.pid === parseInt(command.pid));
+
+    let success = false;
+    let output = "";
+    let errorStr = "";
+
+    if (!targetProc) {
+      errorStr = `Process with PID ${command.pid} not found running on system.`;
+      console.error(`[-] Validation failed: ${errorStr}`);
+    } else if (targetProc.name.toLowerCase() !== command.processName.toLowerCase()) {
+      errorStr = `Process name mismatch! Expected '${command.processName}', but PID ${command.pid} is '${targetProc.name}'.`;
+      console.error(`[-] Validation failed: ${errorStr}`);
+    } else if (!checkAdmin()) {
+      errorStr = `Capability Execution Denied: Agent lacks administrative privileges required to kill process.`;
+      console.error(`[-] Validation failed: ${errorStr}`);
+    } else {
+      console.log(`[+] Validation passed. Terminating ${targetProc.name}...`);
+      try {
+        if (os.platform() === 'win32') {
+          await new Promise((resolve, reject) => {
+            exec(`taskkill /F /PID ${command.pid}`, (err, stdout, stderr) => {
+              if (err) reject(err);
+              else resolve(stdout);
+            });
+          });
+        } else {
+          process.kill(command.pid, 'SIGKILL');
+        }
+        success = true;
+        output = `Process ${command.processName} (PID: ${command.pid}) successfully terminated.`;
+        console.log(`[+] ${output}`);
+      } catch (e) {
+        errorStr = `Failed to terminate: ${e.message}`;
+        console.error(`[-] ${errorStr}`);
+      }
+    }
+
+    const resultPayload = {
+      isResult: true,
+      commandId: command.commandId,
+      action: command.action,
+      pid: command.pid,
+      processName: command.processName,
+      success,
+      output,
+      error: errorStr
+    };
+
+    if (wsClient && wsClient.readyState === WebSocket.OPEN) {
+      wsClient.send(JSON.stringify({ type: 'COMMAND_RESULT', data: resultPayload }));
+    } else {
+      await axios.post(COMMANDS_URL, resultPayload, {
+        headers: { 'Authorization': AUTH_TOKEN, 'Content-Type': 'application/json' }
+      });
+    }
+  } else if (command && command.action === 'EXEC') {
+    console.log(`\n[!] Received Command: EXEC | CMD: ${command.command}`);
+    
+    let success = false;
+    let output = "";
+    let errorStr = "";
+
+    const rawCmd = (command.command || "").trim();
+    const firstToken = rawCmd.split(" ")[0].toLowerCase();
+    const isAllowed = ALLOWED_EXEC_PREFIXES.some((p) => firstToken === p || firstToken.startsWith(p));
+
+    if (!isAllowed) {
+      errorStr = `Security Restriction: Command '${firstToken}' is blocked by Zero-Trust CLI sandbox.\nAllowed diagnostic commands: ${ALLOWED_EXEC_PREFIXES.join(", ")}`;
+      console.error(`[-] Validation failed: ${errorStr}`);
+    } else {
+      console.log(`[+] Validation passed. Executing '${rawCmd}'...`);
+      try {
+        output = await new Promise((resolve, reject) => {
+          exec(rawCmd, { timeout: 5000, encoding: "utf-8" }, (err, stdout, stderr) => {
+            if (err) reject(err);
+            else resolve(stdout || "(Command completed with no output)");
+          });
+        });
+        success = true;
+        console.log(`[+] Execution successful.`);
+      } catch (e) {
+        errorStr = `Execution failed: ${e.message}`;
+        console.error(`[-] ${errorStr}`);
+      }
+    }
+
+    const resultPayload = {
+      isResult: true,
+      commandId: command.commandId,
+      action: command.action,
+      processName: 'OS_DIAGNOSTIC',
+      success,
+      output,
+      error: errorStr
+    };
+
+    if (wsClient && wsClient.readyState === WebSocket.OPEN) {
+      wsClient.send(JSON.stringify({ type: 'COMMAND_RESULT', data: resultPayload }));
+    } else {
+      await axios.post(COMMANDS_URL, resultPayload, {
+        headers: { 'Authorization': AUTH_TOKEN, 'Content-Type': 'application/json' }
+      });
+    }
+  }
+}
+
 // Command Polling Loop
 async function pollCommands() {
+  if (wsClient && wsClient.readyState === WebSocket.OPEN) return; // WSS handles it
   try {
     const response = await axios.get(COMMANDS_URL, {
       headers: { 'Authorization': AUTH_TOKEN }
     });
 
     const command = response.data.command;
-    if (command && command.action === 'KILL_PROCESS') {
-      console.log(`\n[!] Received Command: KILL_PROCESS | PID: ${command.pid} | TARGET: ${command.processName}`);
-      
-      // Verify process name matches before killing
-      const processData = await si.processes();
-      const targetProc = processData.list.find(p => p.pid === parseInt(command.pid));
-
-      let success = false;
-      let output = "";
-      let errorStr = "";
-
-      if (!targetProc) {
-        errorStr = `Process with PID ${command.pid} not found running on system.`;
-        console.error(`[-] Validation failed: ${errorStr}`);
-      } else if (targetProc.name.toLowerCase() !== command.processName.toLowerCase()) {
-        errorStr = `Process name mismatch! Expected '${command.processName}', but PID ${command.pid} is '${targetProc.name}'.`;
-        console.error(`[-] Validation failed: ${errorStr}`);
-      } else {
-        console.log(`[+] Validation passed. Terminating ${targetProc.name}...`);
-        try {
-          if (os.platform() === 'win32') {
-            await new Promise((resolve, reject) => {
-              exec(`taskkill /F /PID ${command.pid}`, (err, stdout, stderr) => {
-                if (err) reject(err);
-                else resolve(stdout);
-              });
-            });
-          } else {
-            process.kill(command.pid, 'SIGKILL');
-          }
-          success = true;
-          output = `Process ${command.processName} (PID: ${command.pid}) successfully terminated.`;
-          console.log(`[+] ${output}`);
-        } catch (e) {
-          errorStr = `Failed to terminate: ${e.message}`;
-          console.error(`[-] ${errorStr}`);
-        }
-      }
-
-      // Report result back to dashboard
-      await axios.post(COMMANDS_URL, {
-        isResult: true,
-        commandId: command.commandId,
-        action: command.action,
-        pid: command.pid,
-        processName: command.processName,
-        success,
-        output,
-        error: errorStr
-      }, {
-        headers: { 'Authorization': AUTH_TOKEN, 'Content-Type': 'application/json' }
-      });
+    if (command) {
+      await handleCommand(command);
     }
   } catch (error) {
     // Silently ignore polling errors
@@ -354,6 +571,9 @@ async function pollCommands() {
 
 // Boot Sequence
 async function startAgent() {
+  await loadOrEnrollIdentity();
+  connectWebSocket();
+
   // 1. Instantly fire fast telemetry so the dashboard populates!
   collectFastTelemetry();
   

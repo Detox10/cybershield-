@@ -104,11 +104,11 @@ function makePoint(
   const value = Math.round(cfg.getApiValue(data) * 10) / 10;
   const isSpike = value > cfg.criticalThreshold;
   const spikeType = isSpike
-    ? cfg.spikeTypes[Math.floor(Math.random() * cfg.spikeTypes.length)]
+    ? "Classification Unavailable"
     : "";
   const logLevel: "INFO" | "WARN" | "CRITICAL" = isSpike ? "CRITICAL" : "INFO";
   const sourceIp = isSpike
-    ? cfg.spikeIps[Math.floor(Math.random() * cfg.spikeIps.length)]
+    ? "IP Unavailable"
     : cfg.nominalIp(id);
 
   let logMessage = isSpike ? cfg.spikeLog(value, spikeType) : cfg.nominalLog(value);

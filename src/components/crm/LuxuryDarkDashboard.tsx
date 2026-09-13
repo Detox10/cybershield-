@@ -191,10 +191,10 @@ export const LuxuryDarkDashboard: React.FC<LuxuryDarkDashboardProps> = ({
 
             <div>
               <div className="text-2xl font-extrabold text-white tracking-tight flex items-baseline gap-2">
-                {cpuLoad}%
+                {cpuLoad !== null ? `${cpuLoad}%` : "—"}
               </div>
               <div className="flex items-center gap-2 mt-1.5 text-[11px] text-slate-400 truncate">
-                <span className="truncate">{cpuModel} ({cpuCores} Cores)</span>
+                <span className="truncate">{cpuModel !== null ? `${cpuModel} (${cpuCores} Cores)` : "Waiting for Agent"}</span>
               </div>
             </div>
           </motion.div>
@@ -221,10 +221,10 @@ export const LuxuryDarkDashboard: React.FC<LuxuryDarkDashboardProps> = ({
 
             <div>
               <div className="text-2xl font-extrabold text-white tracking-tight flex items-baseline gap-2">
-                {memUsagePercent}%
+                {memUsagePercent !== null ? `${memUsagePercent}%` : "—"}
               </div>
               <div className="flex items-center gap-2 mt-1.5 text-[11px] text-slate-400">
-                <span>{memUsedGb} GB / {memTotalGb} GB Used</span>
+                <span>{memUsedGb !== null ? `${memUsedGb} GB / ${memTotalGb} GB Used` : "Waiting for Agent"}</span>
               </div>
             </div>
           </motion.div>
@@ -251,10 +251,10 @@ export const LuxuryDarkDashboard: React.FC<LuxuryDarkDashboardProps> = ({
 
             <div>
               <div className="text-2xl font-extrabold text-white tracking-tight flex items-baseline gap-2">
-                {diskUsagePercent}%
+                {diskUsagePercent !== null ? `${diskUsagePercent}%` : "—"}
               </div>
               <div className="flex items-center gap-2 mt-1.5 text-[11px] text-slate-400">
-                <span>{diskUsedGb} GB / {diskTotalGb} GB Used</span>
+                <span>{diskUsedGb !== null ? `${diskUsedGb} GB / ${diskTotalGb} GB Used` : "Waiting for Agent"}</span>
               </div>
             </div>
           </motion.div>
@@ -281,11 +281,11 @@ export const LuxuryDarkDashboard: React.FC<LuxuryDarkDashboardProps> = ({
 
             <div>
               <div className="text-2xl font-extrabold text-white tracking-tight flex items-baseline gap-2">
-                {(rxMbps + txMbps).toFixed(1)} <span className="text-xs font-normal text-slate-400">Mbps</span>
+                {rxMbps !== null && txMbps !== null ? (rxMbps + txMbps).toFixed(1) : "—"} <span className="text-xs font-normal text-slate-400">Mbps</span>
               </div>
               <div className="flex items-center gap-2 mt-1.5 text-[11px] text-slate-400">
-                <span className="flex items-center gap-1"><ArrowDownRight className="w-3 h-3 text-sky-400"/> {rxMbps} Mbps</span>
-                <span className="flex items-center gap-1"><ArrowUpRight className="w-3 h-3 text-rose-400"/> {txMbps} Mbps</span>
+                <span className="flex items-center gap-1"><ArrowDownRight className="w-3 h-3 text-sky-400"/> {rxMbps !== null ? rxMbps : "—"} Mbps</span>
+                <span className="flex items-center gap-1"><ArrowUpRight className="w-3 h-3 text-rose-400"/> {txMbps !== null ? txMbps : "—"} Mbps</span>
               </div>
             </div>
           </motion.div>

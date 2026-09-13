@@ -14,6 +14,7 @@ export async function POST(request: Request) {
 
     const finalHostname = hostname || `Unknown-${crypto.randomUUID().split('-')[0]}`;
     const finalOsBuild = osBuild || 'Unknown Build';
+    const adminCap = data.hasAdminPrivileges === true;
 
     // Generate a unique device secret
     const deviceSecret = crypto.randomBytes(32).toString('hex');
@@ -23,6 +24,7 @@ export async function POST(request: Request) {
         hostname: finalHostname,
         osBuild: finalOsBuild,
         credentialSecret: deviceSecret,
+        hasAdminPrivileges: adminCap,
       },
     });
 
